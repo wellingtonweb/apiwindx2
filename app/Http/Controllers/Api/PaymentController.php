@@ -201,7 +201,7 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-//        dd($payment);
+//        dd($payment->reference);
 
         if ($payment->method == "ecommerce" and $payment->payment_type == "pix"){
 
@@ -213,7 +213,7 @@ class PaymentController extends Controller
                 $merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
             }
 
-            dd($environment);
+//            dd($payment->reference);
 
 //            $cieloPayment = CieloEcommerce::getSale($payment->reference);
 //           $cieloPayment = (new QuerySaleRequest($merchant,$environment))->execute($payment->reference);
@@ -221,12 +221,11 @@ class PaymentController extends Controller
                 "Content-Type" => "application/json",
                 "MerchantId" => $merchant->getId(),
                 "MerchantKey" => $merchant->getKey(),
-                'RequestId' => $payment->id,
-                'PaymentId' => $payment->reference
+                'PaymentId' => "94b14b59-10b7-4ab7-a409-813101e5c2f5"
 
-            ])->get("https://apiquery.cieloecommerce.cielo.com.br/1/sales/".$payment->reference);
+            ])->get("https://apiquery.cieloecommerce.cielo.com.br/1/sales/94b14b59-10b7-4ab7-a409-813101e5c2f5");
 
-            dd($cieloPayment);
+            dd($cieloPayment->object());
 
             switch ($cieloPayment->status){
                 case 2:
