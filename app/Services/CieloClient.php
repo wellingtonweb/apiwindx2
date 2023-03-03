@@ -53,6 +53,8 @@ class CieloClient
         $this->order = $order;
         $this->paymentData = (object) $paymentData;
         $this->sale = new Sale($this->order->reference);
+
+//        dd($this->sale, $this->paymentData, $this->order);
     }
 
 //    public function debit()
@@ -126,6 +128,7 @@ class CieloClient
             ]
         ]);
 
+//        dd($response->object()->Payment->PaymentId);
         return $response->object();
     }
 
@@ -133,6 +136,8 @@ class CieloClient
     {
         $this->sale = (new CieloEcommerce($this->merchant, $this->environment))->createSale($this->sale);
         $response = $this->sale->getPayment();
+
+//        dd('Teste: ',$response);
 
         return $response;
     }

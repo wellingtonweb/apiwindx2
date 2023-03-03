@@ -73,7 +73,11 @@ class PaymentController extends Controller
             $validated['reference'] = (Str::uuid())->toString();
         }
 
+//        dd($validated);
+
         $payment = (Payment::create($validated))->load('terminal');
+
+
 
         if ($payment) {
             switch ($payment->method) {
@@ -84,63 +88,6 @@ class PaymentController extends Controller
 
                 case "ecommerce":
                     $cieloPayment = (new CieloClient($payment, $validated));
-
-//                    $cieloPayment = (new CieloClient($payment, $validated['card']));
-
-//                    if($payment->payment_type == "credit"){
-//                        $ecommercePayment = $cieloPayment->credit();
-//                    }else{
-//                        $ecommercePayment = $cieloPayment->debit();
-//                    }
-//
-//                    switch ($ecommercePayment->getStatus()){
-//                        case 2:
-//                            $payment->status = "approved";
-//                            break;
-//                        case 3:
-//                        case 10:
-//                        case 13:
-//                            $payment->status = "refused";
-//                            break;
-//                        default:
-//                            $payment->status = $payment->status;
-//                            break;
-//                    }
-//                    if ($payment->save() && $payment->status == "approved"){
-//                        ProcessCallback::dispatch($payment);
-//                    }
-//                    $payment->message = "{$ecommercePayment->getReturnCode()} - {$ecommercePayment->getReturnMessage()}";
-
-
-//                    if($payment->payment_type == "credit"){
-//                        $ecommercePayment = $cieloPayment->credit();
-//                    }elseif ($payment->payment_type == "debit"){
-//                        $ecommercePayment = $cieloPayment->debit();
-//                    }else{
-//                        $ecommercePayment = $cieloPayment->pix();
-//                        $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
-//                        $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
-////                        break;
-//                    }
-//
-//                    switch ($ecommercePayment->getStatus()){
-//                        case 2:
-//                            $payment->status = "approved";
-//                            break;
-//                        case 3:
-//                        case 10:
-//                        case 13:
-//                            $payment->status = "refused";
-//                            break;
-//                        default:
-//                            $payment->status = $payment->status;
-//                            break;
-//                    }
-//                    if ($payment->save() && $payment->status == "approved"){
-//                        ProcessCallback::dispatch($payment);
-//                    }
-//
-//                    $payment->message = "{$ecommercePayment->getReturnCode()} - {$ecommercePayment->getReturnMessage()}";
 
                     if(Str::contains($payment->payment_type,["credit", "debit"])){
                         if($payment->payment_type == "credit"){
@@ -170,8 +117,12 @@ class PaymentController extends Controller
                         $ecommercePayment = $cieloPayment->pix();
                         $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
                         $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
-                    }
+                        $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
 
+                        $paymentUpdate = Payment::find($payment->id);
+                        $paymentUpdate->transaction = $payment->PaymentId;
+                        $paymentUpdate->save();
+                    }
                     break;
 
                 case "picpay":
@@ -182,6 +133,7 @@ class PaymentController extends Controller
             }
 
         }
+
         return new PaymentResource($payment);
     }
 
@@ -201,8 +153,6 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-//        dd($payment->reference);
-
         if ($payment->method == "ecommerce" and $payment->payment_type == "pix"){
 
             if (getenv('APP_ENV') == 'local') {
@@ -213,21 +163,17 @@ class PaymentController extends Controller
                 $merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
             }
 
-//            dd($payment->reference);
-
-//            $cieloPayment = CieloEcommerce::getSale($payment->reference);
-//           $cieloPayment = (new QuerySaleRequest($merchant,$environment))->execute($payment->reference);
             $cieloPayment = Http::withHeaders([
                 "Content-Type" => "application/json",
                 "MerchantId" => $merchant->getId(),
                 "MerchantKey" => $merchant->getKey(),
-                'PaymentId' => "94b14b59-10b7-4ab7-a409-813101e5c2f5"
+            ])->get($environment->getApiQueryURL(). "1/sales/". $payment->transaction);
 
-            ])->get("https://apiquery.cieloecommerce.cielo.com.br/1/sales/94b14b59-10b7-4ab7-a409-813101e5c2f5");
+            if (empty($payment->transaction)){
+                return response()->json(false);
+            }
 
-            dd($cieloPayment->object());
-
-            switch ($cieloPayment->status){
+            switch ($cieloPayment->object()->Payment->Status){
                 case 2:
                     $payment->status = "approved";
                     break;
@@ -237,13 +183,13 @@ class PaymentController extends Controller
                     $payment->status = "refused";
                     break;
                 default:
-                    $payment->status = $cieloPayment->status;
+                    $payment->status = "created";
                     break;
             }
+
             if ($payment->save() && $payment->status == "approved"){
                 ProcessCallback::dispatch($payment);
             }
-
         }
 
         return new PaymentResource($payment);
