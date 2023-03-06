@@ -36,6 +36,7 @@ class VigoClient
             $this->password = getenv('VIGO_PROD_PASSWORD');
             $this->caixa = getenv('VIGO_PROD_CAIXA');
         }
+
         $this->customer = [];
         $this->login();
     }
@@ -184,6 +185,7 @@ class VigoClient
         return $this;
     }
 
+//    public function checkoutBillet($billet, $payment_type)
     public function checkoutBillet($billet)
     {
         $billet = (object)$billet;
@@ -202,6 +204,7 @@ class VigoClient
         }
     }
 
+//    public function reverseBillet($billet, $payment_type)
     public function reverseBillet($billet)
     {
         $billet = (object)$billet;

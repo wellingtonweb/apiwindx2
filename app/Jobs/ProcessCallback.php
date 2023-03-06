@@ -77,6 +77,8 @@ class ProcessCallback implements ShouldQueue
         if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
             $action = ($this->payment->status === "approved") ? true : false;
             foreach ($this->payment->billets as $billet) {
+                //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
+//                ProcessBillets::dispatch((array)$billet, $action, $this->payment->payment_type);
                 ProcessBillets::dispatch((array)$billet, $action);
             }
         }

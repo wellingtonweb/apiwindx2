@@ -19,6 +19,7 @@ class ProcessBillets implements ShouldQueue
     private $billet;
     private $action;
     private $vigoClient;
+//    private $paymentType;
 
     /**
      * Create a new job instance.
@@ -26,10 +27,12 @@ class ProcessBillets implements ShouldQueue
      * @return void
      */
     public function __construct(array $billet,$action)
+//    public function __construct(array $billet,$action, $payment_type)
     {
         $this->billet = $billet;
         $this->action = $action;
         $this->vigoClient = new VigoClient();
+//        $this->paymentType;
     }
 
     /**
@@ -40,8 +43,10 @@ class ProcessBillets implements ShouldQueue
     public function handle()
     {
         if($this->action){
+//            $this->vigoClient->checkoutBillet($this->billet, $this->paymentType);
             $this->vigoClient->checkoutBillet($this->billet);
         }else{
+//            $this->vigoClient->reverseBillet((array)$this->billet, $this->paymentType);
             $this->vigoClient->reverseBillet((array)$this->billet);
         }
     }
