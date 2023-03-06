@@ -70,40 +70,41 @@ class CieloClient
 
     public function debit()
     {
-        $this->sale->customer($this->paymentData->holder_name);
+        $this->sale->customer($this->paymentData->card['holder_name']);
         $this->payment = $this->sale
             ->payment($this->order->amount * 100)
             ->setCapture(1);
         $this->payment->setAuthenticate(1)
             ->setType('DebitCard')
-            ->debitCard($this->paymentData->card->securityCode, $this->paymentData->bandeira)
-            ->setExpirationDate($this->paymentData->card->expiration_date)
-            ->setCardNumber($this->paymentData->card->cardcard_number)
-            ->setHolder($this->paymentData->card->full_name);
+            ->debitCard($this->paymentData->card['cvv'], $this->paymentData->card['bandeira'])
+//            ->debitCard($this->paymentData->card['securityCode'], $this->paymentData['bandeira'])
+            ->setExpirationDate($this->paymentData->card['expiration_date'])
+            ->setCardNumber($this->paymentData->card['card_number'])
+            ->setHolder($this->paymentData->card['holder_name']);
+//        dd($this->pay());
         return $this->pay();
     }
 
-//    public function credit()
-//    {
-//        $this->payment->setType("CreditCard")
-//            ->creditCard($this->paymentData->cvv, $this->paymentData->bandeira)
-//            ->setExpirationDate($this->paymentData->expiration_date)
-//            ->setCardNumber($this->paymentData->card_number)
-//            ->setHolder($this->paymentData->holder_name);
-//        return $this->pay();
-//    }
-
     public function credit()
     {
-        $this->sale->customer($this->paymentData->card->holder_name);
+//        dd($this->paymentData);
+
+        $this->sale->customer($this->paymentData->card['holder_name']);
         $this->payment = $this->sale
             ->payment($this->order->amount * 100)
             ->setCapture(1);
         $this->payment->setType("CreditCard")
-            ->creditCard($this->paymentData->card->cvv, $this->paymentData->card->bandeira)
-            ->setExpirationDate($this->paymentData->card->expiration_date)
-            ->setCardNumber($this->paymentData->card->card_number)
-            ->setHolder($this->paymentData->card->holder_name);
+            ->creditCard($this->paymentData->card['cvv'], $this->paymentData->card['bandeira'])
+            ->setExpirationDate($this->paymentData->card['expiration_date'])
+            ->setCardNumber($this->paymentData->card['card_number'])
+            ->setHolder($this->paymentData->card['holder_name']);
+
+//        ->creditCard($this->paymentData->card->cvv, $this->paymentData->card->bandeira)
+//        ->setExpirationDate($this->paymentData->card->expiration_date)
+//        ->setCardNumber($this->paymentData->card->card_number)
+//        ->setHolder($this->paymentData->card->holder_name);
+
+//        dd($this->pay());
         return $this->pay();
     }
 
@@ -118,9 +119,12 @@ class CieloClient
         ])->post($this->environment->getApiUrl() . "1/sales/", [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
-                "Name" => "Nome do Pagador",
-                "Identity" => "12345678909",
-                "IdentityType" => "CPF"
+                "Name" => $this->paymentData->buyer['first_name'] . ' ' . $this->paymentData->buyer['last_name'],
+//                "Name" => "Nome do Pagador",
+                "Identity" => $this->paymentData->buyer['cpf_cnpj'],
+//                "Identity" => "12345678909",
+                "IdentityType" => strlen($this->paymentData->buyer['cpf_cnpj']) == 11 ? 'CPF' : 'CNPJ'
+//                "IdentityType" => "CPF"
             ],
             "Payment" => [
                 "Type" => "Pix",
