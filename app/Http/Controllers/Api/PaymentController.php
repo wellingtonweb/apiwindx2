@@ -83,7 +83,10 @@ class PaymentController extends Controller
             switch ($payment->method) {
 
                 case "tef":
+
+//                    dd($payment);
                     $response = (new PaygoClient())->pay($payment);
+//                    dd($response);
                     break;
 
                 case "ecommerce":

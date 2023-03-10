@@ -18,7 +18,8 @@ class PaygoClient
 
     public function __construct()
     {
-        if (App::environment(['local', 'staging'])) {
+        if (getenv('APP_ENV') == 'local') {
+//        if (App::environment(['local'])) {
             $this->url = getenv('CONTROLPAY_SANDBOX_APIURL');
             $this->login = getenv('CONTROLPAY_SANDBOX_LOGIN');
             $this->senha = getenv('CONTROLPAY_SANDBOX_PASSWORD');
@@ -72,7 +73,7 @@ class PaygoClient
             "parcelamentoAdmin" => null,
             "quantidadeParcelas" => 1,
             "adquirente" => "REDE",
-            "valorTotalVendido" => "{$payment->amount}"
+            "valorTotalVendido" => $payment->amount
         ]);
 
         if($response->successful()){

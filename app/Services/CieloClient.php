@@ -99,6 +99,16 @@ class CieloClient
             ->setCardNumber($this->paymentData->card['card_number'])
             ->setHolder($this->paymentData->card['holder_name']);
 
+
+
+
+        //Verificar origem dos metodos setHolder e setCardNumber
+
+
+
+
+
+
 //        ->creditCard($this->paymentData->card->cvv, $this->paymentData->card->bandeira)
 //        ->setExpirationDate($this->paymentData->card->expiration_date)
 //        ->setCardNumber($this->paymentData->card->card_number)
