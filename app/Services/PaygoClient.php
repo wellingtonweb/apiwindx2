@@ -31,8 +31,6 @@ class PaygoClient
             $this->senhaTecnica = getenv('CONTROLPAY_PROD_TECHNICAL_PASSWORD');
         }
 
-
-
         $response = Http::withHeaders([
             "Content-Type" => "application/json"
         ])->post("{$this->url}/Login/login/",[
@@ -78,8 +76,24 @@ class PaygoClient
 
         if($response->successful()){
             $payment->token = $response->object()->intencaoVenda->token;
+            $payment->receipt = $response->object()->intencaoVenda->id;
             $payment->save();
             return $payment;
+        }else{
+            return $response->toException();
+        }
+    }
+
+    public function getPaymentStatus($reference)
+    {
+        $response = Http::withHeaders([
+            "Content-Type" => "application/json"
+        ])->post("{$this->url}/IntencaoVenda/GetByFiltros?key={$this->key}", [
+            "referencia" => $reference
+        ]);
+
+        if($response->successful()){
+            return $response->object();
         }else{
             return $response->toException();
         }

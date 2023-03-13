@@ -194,6 +194,40 @@ class PaymentController extends Controller
                 ProcessCallback::dispatch($payment);
             }
         }
+        else{
+
+            //Testando a possibilidade de resgatar o status da venda via TEF manualmente
+
+//            dd($payment->receipt);
+
+            $response = (new PaygoClient())->getPaymentStatus($payment->reference);
+            //Teste TEF
+//            $payment->status = "refused";
+
+//            dd($response->intencoesVendas[0]->intencaoVendaStatus->id);
+
+            switch ($response->intencoesVendas[0]->intencaoVendaStatus->id){
+                case 10:
+                    $payment->status = "approved";
+                    break;
+                case 15:
+                case 18:
+                case 19:
+                case 20:
+                case 25:
+                    $payment->status = "refused";
+                    break;
+                default:
+                    $payment->status = "created";
+                    break;
+            }
+
+            if ($payment->save() && $payment->status == "approved"){
+                ProcessCallback::dispatch($payment);
+            }
+
+//            dd($response);
+        }
 
         return new PaymentResource($payment);
     }
