@@ -23,7 +23,7 @@ class CreatePaymentsTable extends Migration
             $table->string('token')->nullable();
             $table->string('transaction')->nullable();
             $table->enum('method', ['tef', 'ecommerce', 'picpay']);
-            $table->enum('payment_type', ['credit', 'debit'])->nullable();
+            $table->enum('payment_type', ['credit', 'debit', 'pix'])->nullable();
             $table->enum('status', [
                 'created',
                 'approved',
@@ -33,7 +33,8 @@ class CreatePaymentsTable extends Migration
                 'chargeback',
             ])->default('created');
 
-            $table->string('receipt')->nullable();
+            $table->text('receipt')->nullable();
+            $table->json('customer_origin')->nullable();
             $table->unsignedBigInteger('terminal_id')->nullable();
 
             $table->timestamps();

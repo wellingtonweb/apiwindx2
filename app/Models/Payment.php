@@ -30,6 +30,7 @@ class Payment extends Model
 
     protected $casts = [
         'billets' => 'array',
+//        'customer_origin' => 'array',
     ];
 
     public function terminal()
