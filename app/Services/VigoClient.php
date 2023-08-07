@@ -411,7 +411,8 @@ class VigoClient
 
     public function osInsert(int $customer_id, String $text)
     {
-        $text = "Pagamento ".$payment_id.", do boleto ".$teste." pago via AUTOATENDIMENTO (ref: #010101".$terminal.") pelo terminal: ".$terminal;
+        //$text = "Pagamento ".$payment_id.", do boleto ".$teste." pago via AUTOATENDIMENTO (ref: #010101".$terminal.") pelo terminal: ".$terminal;
+        
 
         $response = Http::accept('application/json')
             ->withToken($this->token)

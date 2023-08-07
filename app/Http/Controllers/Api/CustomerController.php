@@ -11,6 +11,7 @@ use App\Services\VigoClient;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
@@ -66,6 +67,37 @@ class CustomerController extends Controller
     public function payments($customer_id)
     {
         $payments = Payment::where('customer', $customer_id)->get();
+
+        return new PaymentCollection($payments);
+    }
+
+    
+    /**
+     * @return PaymentCollection
+     */
+    public function checkPaymentsToday()
+    {
+        $today = Carbon::now()->format('Y-m-d');
+
+        $payments = Payment::where('status', 'created')
+                            ->whereDate('created_at', $today)
+                            ->get();
+
+        return new PaymentCollection($payments);
+    }
+
+    /**
+     * @param  $customer_id
+     * @return PaymentCollection
+     */
+    public function paymentsCustomerToday($customer_id)
+    {
+        $today = Carbon::now()->format('Y-m-d');
+
+        $payments = Payment::where('customer', $customer_id)
+                            ->where('status', 'approved')
+                            ->whereDate('created_at', $today)
+                            ->get();
 
         return new PaymentCollection($payments);
     }

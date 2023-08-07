@@ -57,6 +57,8 @@ class PaymentController extends Controller
         return new PaymentCollection($payments);
     }
 
+    
+
 
 
     /**
@@ -79,7 +81,7 @@ class PaymentController extends Controller
 //        dd($validated);
 
         $payment = (Payment::create($validated))->load('terminal');
-
+        
         if ($payment) {
             switch ($payment->method) {
 

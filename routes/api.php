@@ -35,8 +35,11 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::apiResource('payments', PaymentController::class);
     Route::apiResource('terminals', TerminalController::class);
 
+    Route::get('/checkpaymentstoday', [CustomerController::class, "checkPaymentsToday"]);
+
     // Customer Payments
     Route::get('/customer/{customer}/payments', [CustomerController::class, "payments"]);
+    Route::get('/customer/{customer}/payments/today', [CustomerController::class, "paymentsCustomerToday"]);
 
     // Terminal Payments
     Route::get('/terminals/{terminal}/payments', [TerminalPaymentsController::class, 'index']);
