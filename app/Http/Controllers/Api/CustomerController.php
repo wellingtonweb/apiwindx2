@@ -78,19 +78,9 @@ class CustomerController extends Controller
      */
     public function checkPaymentsToday()
     {
-        $payments = (new WindxClient())->getCheckPaymentsToday();
+        return (new WindxClient())->getCheckPaymentsToday();
 
-        return new PaymentCollection($payments);
-        
-        /*
-        $today = Carbon::now()->format('Y-m-d');
-
-        $payments = Payment::where('status', 'created')
-                            ->whereDate('created_at', $today)
-                            ->get();
-
-        return new PaymentCollection($payments);
-        */
+        //return new PaymentCollection($payments);
     }
 
     /**
@@ -99,21 +89,9 @@ class CustomerController extends Controller
      */
     public function paymentsCustomerToday($customer_id)
     {
+        return (new WindxClient())->getPaymentsCustomerToday($customer_id);
 
-        $payments = (new WindxClient())->getPaymentsCustomerToday($customer_id);
-
-        return new PaymentCollection($payments);
-
-        /*
-        $today = Carbon::now()->format('Y-m-d');
-
-        $payments = Payment::where('customer', $customer_id)
-                            ->where('status', 'approved')
-                            ->whereDate('created_at', $today)
-                            ->get();
-
-        return new PaymentCollection($payments);
-        */
+        //return new PaymentCollection($payments);
     }
 
     public function release(Request $request)
