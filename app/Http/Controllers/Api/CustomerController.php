@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use App\Services\WindxClient;
 
 class CustomerController extends Controller
 {
@@ -77,6 +78,11 @@ class CustomerController extends Controller
      */
     public function checkPaymentsToday()
     {
+        $payments = (new WindxClient())->getCheckPaymentsToday();
+
+        return new PaymentCollection($payments);
+        
+        /*
         $today = Carbon::now()->format('Y-m-d');
 
         $payments = Payment::where('status', 'created')
@@ -84,6 +90,7 @@ class CustomerController extends Controller
                             ->get();
 
         return new PaymentCollection($payments);
+        */
     }
 
     /**
@@ -92,6 +99,12 @@ class CustomerController extends Controller
      */
     public function paymentsCustomerToday($customer_id)
     {
+
+        $payments = (new WindxClient())->getPaymentsCustomerToday($customer_id);
+
+        return new PaymentCollection($payments);
+
+        /*
         $today = Carbon::now()->format('Y-m-d');
 
         $payments = Payment::where('customer', $customer_id)
@@ -100,6 +113,7 @@ class CustomerController extends Controller
                             ->get();
 
         return new PaymentCollection($payments);
+        */
     }
 
     public function release(Request $request)
