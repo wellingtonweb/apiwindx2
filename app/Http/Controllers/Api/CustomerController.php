@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PaymentController;
 use App\Http\Requests\CustomerRequest;
 use App\Http\Resources\CustomerCollection;
 use App\Http\Resources\PaymentCollection;
@@ -78,7 +79,9 @@ class CustomerController extends Controller
      */
     public function checkPaymentsToday()
     {
-        return (new WindxClient())->getCheckPaymentsToday();
+        return (new WindxClient())->scanPaymentsToday();
+
+        //return (new WindxClient())->getCheckPaymentsToday();
 
         //return new PaymentCollection($payments);
     }

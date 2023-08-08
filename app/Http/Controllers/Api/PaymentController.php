@@ -23,6 +23,7 @@ use App\Models\Payment;
 use App\Services\CieloClient;
 use App\Services\PaygoClient;
 use App\Services\PicpayClient;
+use App\Services\WindxClient;
 use Cielo\API30\Ecommerce\Environment;
 use Cielo\API30\Ecommerce\Request\QuerySaleRequest;
 use Cielo\API30\Ecommerce\CieloEcommerce;
@@ -57,7 +58,7 @@ class PaymentController extends Controller
         return new PaymentCollection($payments);
     }
 
-    
+
 
 
 
@@ -171,109 +172,9 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-//        if (
-//            $payment->method == "ecommerce" and $payment->payment_type == "pix" )
-////            ($payment->method == "tef" and $payment->payment_type == "pix"))
-//        {
-//        dd($payment);
+        $result = (new WindxClient())->checkStatusPayment($payment);
 
-        if ($payment->payment_type == "pix"){
-
-            $cieloPayment = CieloClient::getPixStatus($payment->transaction);
-
-//            dd($cieloPayment->object());
-//            if (getenv('APP_ENV') == 'local') {
-//                $environment = Environment::sandbox();
-//                $merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
-//            } else {
-//                $environment = Environment::production();
-//                $merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
-//            }
-//
-//            $cieloPayment = Http::withHeaders([
-//                "Content-Type" => "application/json",
-//                "MerchantId" => $merchant->getId(),
-//                "MerchantKey" => $merchant->getKey(),
-//            ])->get($environment->getApiQueryURL(). "1/sales/". $payment->transaction);
-
-            if($payment->terminal_id != '' || $payment->terminal_id != null){
-                $payment->method = 'tef';
-            }
-
-            switch ($cieloPayment->object()->Payment->Status){
-                case 2:
-                    $payment->status = "approved";
-                    break;
-                case 3:
-                case 10:
-                case 13:
-                    $payment->status = "refused";
-                    break;
-                default:
-                    $payment->status = "created";
-                    break;
-            }
-
-//            dd($cieloPayment->object());
-
-
-                $payment->save();
-
-            if ($payment->save() && $payment->status == "approved"){
-
-                ProcessCallback::dispatch($payment);
-            }
-        }
-        elseif($payment->method == "tef"){
-//        elseif($payment->method == "tef" && $payment->payment_type != "pix"){
-
-//            dd($payment);
-
-            $response = (new PaygoClient())->getPaymentStatus($payment->reference);
-
-//            dd($response);
-
-            switch ($response->intencoesVendas[0]->intencaoVendaStatus->id){
-                case 10:
-                    $payment->status = "approved";
-                    break;
-                case 18:
-                case 19:
-                case 20:
-                    $payment->status = "canceled";
-                    break;
-                case 15:
-                    $payment->status = "expired";
-                    break;
-                case 25:
-                    $payment->status = "refused";
-                    break;
-                default:
-                    $payment->status = "created";
-                    break;
-            }
-
-            if ($payment->save() && $payment->status == "approved"){
-
-                    $payment->receipt = $response->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente;
-                    $payment->transaction = $response->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
-
-                $payment->save();
-
-//                dd($payment);
-
-                ProcessCallback::dispatch($payment);
-
-//                dd($payment->getAttributes());
-//                dd($payment->getAttributes()['customer']);
-            }else{
-                $payment->receipt = null;
-                $payment->save();
-            }
-
-        }
-
-        return new PaymentResource($payment);
+        return new PaymentResource($result);
     }
 
 }
