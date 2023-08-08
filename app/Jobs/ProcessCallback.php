@@ -15,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 
 class ProcessCallback implements ShouldQueue
 {
@@ -58,15 +59,18 @@ class ProcessCallback implements ShouldQueue
                     //
                     break;
                 case "picpay":
-                    $this->paymentg = (new PicpayClient($this->payment))->getStatus();
+                    $this->payment = (new PicpayClient($this->payment))->getStatus();
                     break;
                 default:
                     break;
             }
 
             if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])){
-                $this->proccessBillets();
+                
 
+                $this->proccessBillets();
+        
+               
             }
         }catch (Exception $ex){
             Log::alert("Erro ao efetuar o Callback do pagamento com o ID: #{$this->payment->id}");
@@ -80,11 +84,32 @@ class ProcessCallback implements ShouldQueue
             $action = ($this->payment->status === "approved") ? true : false;
 //            (new VigoClient())->unlockAccount($action);
 
+            $checkBillets = (new VigoClient())->getBillets($this->payment->customer);
+
             foreach ($this->payment->billets as $billet) {
                 //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
 //                ProcessBillets::dispatch((array)$billet, $action, "893");
 //                ProcessBillets::dispatch((array)$billet, $action, $this->payment->id);
-                ProcessBillets::dispatch((array)$billet, $action);
+
+                foreach ($checkBillets as $checkBillet) {
+                    if($checkBillet->Id == $billet->billet_id){
+                        //Liquidar boleto
+                        dd('Liquidou');
+                        //ProcessBillets::dispatch((array)$billet, $action);
+                    }
+                }
+
+                //dd($billet->billet_id);
+                
+                /*
+                $filteredArray = Arr::where($checkBillets, function ($value, $key) use($billetId) {
+                    return $value['Id'] == $billet->billet_id;
+                });
+
+                dd($filteredArray);
+                */
+                
+                
             }
         }
     }

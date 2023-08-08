@@ -212,6 +212,8 @@ class VigoClient
 //    public function checkoutBillet($billet, $payment_type)
     public function checkoutBillet($billet)
     {
+        //$checkBillet = null;
+
         $billet = (object)$billet;
 //        $caixa = "";
 
@@ -229,14 +231,21 @@ class VigoClient
 //                break;
 //        }
 
+        //dd($billet);
+
+        
+        
         $response = Http::accept('application/json')
-            ->withToken($this->token)
-            ->post($this->apiUrl . "/api/app_liquidaboleto", [
+        ->withToken($this->token)
+        ->post($this->apiUrl . "/api/app_liquidaboleto", [
+            //"id_boleto" => "1463874",
                 "id_boleto" => "{$billet->billet_id}",
-                "id_caixa" => "37",
+            "id_caixa" => "37",
 //                "id_caixa" => "{$this->caixa}",
+//            "valor_pago" => "1.50"
                 "valor_pago" => "{$billet->total}"
-            ]);
+        ]);
+
         if ($response->successful()) {
 
             return $response->object();

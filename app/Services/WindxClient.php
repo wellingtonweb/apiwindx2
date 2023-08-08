@@ -37,6 +37,8 @@ class WindxClient
 
         foreach ($payments as $payment){
 
+            dd($payment);
+
             self::checkStatusPayment($payment);
         }
 
@@ -81,7 +83,7 @@ class WindxClient
                 $payment->method = 'tef';
             }
 
-            switch ($cieloPayment->object()->Payment->Status){
+            /*switch ($cieloPayment->object()->Payment->Status){
                 case 2:
                     $payment->status = "approved";
                     break;
@@ -93,7 +95,10 @@ class WindxClient
                 default:
                     $payment->status = "created";
                     break;
-            }
+            }*/
+
+            //Remover após testes
+            $payment->status = "approved";
 
             $payment->save();
 

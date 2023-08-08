@@ -59,9 +59,6 @@ class PaymentController extends Controller
     }
 
 
-
-
-
     /**
      * @param  \App\Http\Requests\PaymentRequest  $request
      * @return PaymentResource
