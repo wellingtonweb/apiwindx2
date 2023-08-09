@@ -66,17 +66,11 @@ class ProcessCallback implements ShouldQueue
             }
 
             if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])){
-                
-
                 $this->proccessBillets();
-        
-               
             }
         }catch (Exception $ex){
             Log::alert("Erro ao efetuar o Callback do pagamento com o ID: #{$this->payment->id}");
-
         }
-
     }
 
     private function proccessBillets(){
@@ -90,26 +84,7 @@ class ProcessCallback implements ShouldQueue
                 //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
 //                ProcessBillets::dispatch((array)$billet, $action, "893");
 //                ProcessBillets::dispatch((array)$billet, $action, $this->payment->id);
-
-                foreach ($checkBillets as $checkBillet) {
-                    if($checkBillet->Id == $billet->billet_id){
-                        //Liquidar boleto
-                        dd('Liquidou');
-                        //ProcessBillets::dispatch((array)$billet, $action);
-                    }
-                }
-
-                //dd($billet->billet_id);
-                
-                /*
-                $filteredArray = Arr::where($checkBillets, function ($value, $key) use($billetId) {
-                    return $value['Id'] == $billet->billet_id;
-                });
-
-                dd($filteredArray);
-                */
-                
-                
+                ProcessBillets::dispatch((array)$billet, $action);
             }
         }
     }

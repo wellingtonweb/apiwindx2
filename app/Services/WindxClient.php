@@ -36,10 +36,8 @@ class WindxClient
         $paymentsFilter = [];
 
         foreach ($payments as $payment){
-
-            dd($payment);
-
             self::checkStatusPayment($payment);
+            array_push($paymentsFilter, $payment);
         }
 
         return $paymentsFilter;
@@ -73,8 +71,8 @@ class WindxClient
         return new PaymentCollection($payments);
     }
 
-    public function checkStatusPayment(Payment $payment){
-
+    public function checkStatusPayment(Payment $payment)
+    {
         if ($payment->payment_type == "pix"){
 
             $cieloPayment = CieloClient::getPixStatus($payment->transaction);
@@ -83,7 +81,7 @@ class WindxClient
                 $payment->method = 'tef';
             }
 
-            /*switch ($cieloPayment->object()->Payment->Status){
+            switch ($cieloPayment->object()->Payment->Status){
                 case 2:
                     $payment->status = "approved";
                     break;
@@ -95,10 +93,7 @@ class WindxClient
                 default:
                     $payment->status = "created";
                     break;
-            }*/
-
-            //Remover após testes
-            $payment->status = "approved";
+            }
 
             $payment->save();
 
@@ -145,6 +140,8 @@ class WindxClient
                 $payment->save();
             }
 
+        }elseif($payment->method == "picpay"){
+            (new PicpayClient($payment))->getStatus();
         }
 
         return $payment;
