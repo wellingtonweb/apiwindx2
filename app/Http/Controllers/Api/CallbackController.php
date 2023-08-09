@@ -12,8 +12,6 @@ class CallbackController extends Controller
 {
     public function index(Request $request)
     {
-        //NÃO MEXER NO CALLBACK PARA NÃO INFLUENCIAR A QUEUE
-
         $referenceId = array_values($request->only([
             'intencaoVendaReferencia',
             'referenceId',

@@ -53,7 +53,7 @@ class ProcessCallback implements ShouldQueue
         try{
             switch ($this->payment->method){
                 case "tef":
-                    //$response = (new PaygoClient())->getPaymentById($this->payment->reference);
+                    //$response = (new PaygoClient())->getPaymentStatus($this->payment->reference);
                     break;
                 case "ecommerce":
                     //

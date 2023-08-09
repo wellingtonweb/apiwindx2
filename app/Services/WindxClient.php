@@ -23,10 +23,8 @@ use App\Services\PicpayClient;
 class WindxClient 
 {
 
-    public function scanPaymentsToday(){
-        //$payments = self::getCheckPaymentsToday();
-        //return $payments;
-
+    public function scanPaymentsToday()
+    {
         $today = Carbon::now()->format('Y-m-d');
 
         $payments = Payment::where('status', 'created')
@@ -41,7 +39,6 @@ class WindxClient
         }
 
         return $paymentsFilter;
-
     }
 
     public function checkDuplicatePayment(){
@@ -73,6 +70,9 @@ class WindxClient
 
     public function checkStatusPayment(Payment $payment)
     {
+        /**
+         * Incluir $payment->method == "ecommerce" para checar pagamentos do ecommerce assim que estiver testando a Central
+         */
         if ($payment->payment_type == "pix"){
 
             $cieloPayment = CieloClient::getPixStatus($payment->transaction);
