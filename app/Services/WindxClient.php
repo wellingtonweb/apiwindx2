@@ -19,6 +19,7 @@ use App\Jobs\ProcessCallback;
 use App\Services\CieloClient;
 use App\Services\PaygoClient;
 use App\Services\PicpayClient;
+use App\Services\Dropbox;
 
 class WindxClient 
 {
@@ -37,6 +38,8 @@ class WindxClient
             self::checkStatusPayment($payment);
             array_push($paymentsFilter, $payment);
         }
+
+        (new Dropbox())->upload();
 
         return $paymentsFilter;
     }
