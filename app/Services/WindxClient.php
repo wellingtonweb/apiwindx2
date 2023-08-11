@@ -19,13 +19,15 @@ use App\Jobs\ProcessCallback;
 use App\Services\CieloClient;
 use App\Services\PaygoClient;
 use App\Services\PicpayClient;
-use App\Services\Dropbox;
+
 
 class WindxClient 
 {
 
     public function scanPaymentsToday()
     {
+
+        dd(new \Google_Client);
         $today = Carbon::now()->format('Y-m-d');
 
         $payments = Payment::where('status', 'created')
@@ -39,7 +41,7 @@ class WindxClient
             array_push($paymentsFilter, $payment);
         }
 
-        (new Dropbox())->upload();
+        
 
         return $paymentsFilter;
     }

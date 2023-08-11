@@ -36,7 +36,10 @@ class Dropbox
         echo '<br/><br/>'; //apenas para quebrar linha
         */
 
-        $this->client->upload($folder."/".$file_name.".zip", asset("storage/app/backup/API_DB_PROD_11-08-2023_08-17.zip"), 'overwrite');
+        $this->client->upload($folder."/db.zip", file_get_contents(asset("storage/app/backup/API_DB_PROD_11-08-2023_08-17.zip")), 'overwrite');
+
+        //$this->client->upload($folder, asset("storage/app/backup/API_DB_PROD_11-08-2023_08-17.zip"), 'overwrite');
+
 
         //dd($client->listFolder('Coisas'));
         
