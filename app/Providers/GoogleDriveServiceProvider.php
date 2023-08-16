@@ -24,7 +24,7 @@ class GoogleDriveServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-         
+         /*
         $client = new \Google_Client;
 
         $service = new \Google_Service_Drive($client);
@@ -37,6 +37,7 @@ class GoogleDriveServiceProvider extends ServiceProvider
             
             return new \League\Flysystem\Filesystem($adapter);
         });
+        */
 
     }
 }
