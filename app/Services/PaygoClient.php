@@ -60,6 +60,9 @@ class PaygoClient
 
     public function pay(Payment $payment)
     {
+        $payment->installment = $payment['billets'][0]->installment;
+        $payment->save();
+
         $response = Http::withHeaders([
             "Content-Type" => "application/json"
         ])->post("{$this->url}/Venda/Vender/?key={$this->key}", [
@@ -68,16 +71,18 @@ class PaygoClient
             "referencia" => $payment->reference,
             "iniciarTransacaoAutomaticamente" => true,
             "parcelamentoAdmin" => null,
-            "quantidadeParcelas" => 1,
+            "quantidadeParcelas" => $payment['billets'][0]->installment,
+            /*"quantidadeParcelas" => 1,*/
             "adquirente" => "",
             "valorTotalVendido" => $payment->amount
         ]);
 
         if($response->successful()){
-            $payment->token = $response->object()->intencaoVenda->token;
-
-            $payment->save();
-            return $payment;
+            $paymentUpdate = Payment::find($payment->id);
+            $paymentUpdate->token = $response->object()->intencaoVenda->token;
+            $paymentUpdate->save();
+            
+            return $paymentUpdate;
         }else{
             return $response->toException();
         }
