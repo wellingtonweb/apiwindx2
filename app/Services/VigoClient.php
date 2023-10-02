@@ -107,6 +107,7 @@ class VigoClient
                         "status" => $customer->situacao,
                         "dt_trust" => $customer->dt_confianca,
                         "company_id" => $customer->idempresa,
+                        "others" => $customers->outros,
                         "billets" => $this->getBillets($customer->id)
                     ]);
 //                    $this->releaseCustomerById($this->customer);
@@ -132,6 +133,7 @@ class VigoClient
                     "status" => $customers->situacao,
                     "dt_trust" => $customers->dt_confianca,
                     "company_id" => $customers->idempresa,
+                    "others" => $customers->outros,
                     "billets" => $this->getBillets($customers->id)
                 ]);
 
@@ -183,6 +185,7 @@ class VigoClient
 
         if ($response->successful()) {
             $customers = $response->object();
+
             $this->customer = (object)[
                 "id" => $customers->id,
                 "full_name" => $customers->nome,
@@ -200,6 +203,7 @@ class VigoClient
                 "status" => $customers->situacao,
                 "dt_trust" => $customers->dt_confianca,
                 "company_id" => $customers->idempresa,
+                "others" => $customers->outros,
                 "billets" => $this->getBillets($customers->id)
             ];
 

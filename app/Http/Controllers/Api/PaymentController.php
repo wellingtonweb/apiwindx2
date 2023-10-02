@@ -180,21 +180,6 @@ class PaymentController extends Controller
 
             $cieloPayment = CieloClient::getPixStatus($payment->transaction);
 
-//            dd($cieloPayment->object());
-//            if (getenv('APP_ENV') == 'local') {
-//                $environment = Environment::sandbox();
-//                $merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
-//            } else {
-//                $environment = Environment::production();
-//                $merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
-//            }
-//
-//            $cieloPayment = Http::withHeaders([
-//                "Content-Type" => "application/json",
-//                "MerchantId" => $merchant->getId(),
-//                "MerchantKey" => $merchant->getKey(),
-//            ])->get($environment->getApiQueryURL(). "1/sales/". $payment->transaction);
-
             if($payment->terminal_id != '' || $payment->terminal_id != null){
                 $payment->method = 'tef';
             }
