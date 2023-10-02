@@ -17,6 +17,7 @@ namespace App\Http\Controllers\Api;
 //use Illuminate\Support\Str;
 //use Ramsey\Uuid\Uuid;
 
+use App\Helpers\Functions;
 use App\Jobs\ProcessCallback;
 use App\Jobs\ProcessRevertPayment;
 use App\Models\Payment;
@@ -253,8 +254,8 @@ class PaymentController extends Controller
 
             if ($payment->save() && $payment->status == "approved"){
 
-                    $payment->receipt = $response->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente;
-                    $payment->transaction = $response->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+                $payment->transaction = $response->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+                $payment->receipt = Functions::receiptFormat($response->intencoesVendas[0]->pagamentosExternos[0]);
 
                 $payment->save();
 
