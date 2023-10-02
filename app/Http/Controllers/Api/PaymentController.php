@@ -103,6 +103,8 @@ class PaymentController extends Controller
                             $ecommercePayment = $cieloPayment->debit();
                         }
 
+//                        dd($ecommercePayment);
+
                         switch ($ecommercePayment->getStatus()){
                             case 2:
                                 $payment->status = "approved";
@@ -178,7 +180,7 @@ class PaymentController extends Controller
 
         if ($payment->payment_type == "pix"){
 
-            $cieloPayment = CieloClient::getPixStatus($payment->transaction);
+            $cieloPayment = CieloClient::getStatus($payment->transaction);
 
             if($payment->terminal_id != '' || $payment->terminal_id != null){
                 $payment->method = 'tef';

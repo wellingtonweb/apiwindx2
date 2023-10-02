@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Payment;
+use App\Services\CieloClient;
 use App\Services\PaygoClient;
 use App\Services\PicpayClient;
 use App\Services\VigoClient;
@@ -55,7 +56,7 @@ class ProcessCallback implements ShouldQueue
                     //$response = (new PaygoClient())->getPaymentById($this->payment->reference);
                     break;
                 case "ecommerce":
-                    //
+                    $response = (new CieloClient())->getStatus($this->payment->reference);
                     break;
                 case "picpay":
                     $this->paymentg = (new PicpayClient($this->payment))->getStatus();

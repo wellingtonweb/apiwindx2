@@ -23,6 +23,7 @@ class CieloClient
 {
     protected $environment;
     protected $merchant;
+    protected $merchantId;
     protected $merchantKey;
     protected $client;
     protected $paymentData;
@@ -34,9 +35,17 @@ class CieloClient
 
     public function __construct(Payment $order, array $paymentData)
     {
+//        if (getenv('APP_ENV') == 'local') {
+//            $this->environment = Environment::sandbox();
+//            $this->merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
+//        } else {
+//            $this->environment = Environment::production();
+//            $this->merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
+//        }
+
         if (getenv('APP_ENV') == 'local') {
-            $this->environment = Environment::sandbox();
-            $this->merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
+//            $this->environment = Environment::sandbox();
+            $this->merchantId =
         } else {
             $this->environment = Environment::production();
             $this->merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
@@ -85,40 +94,31 @@ class CieloClient
         return $this->pay();
     }
 
+//    public function credit()
+//    {
+////        dd($this->paymentData);
+//
+//        $this->sale->customer($this->paymentData->card['holder_name']);
+//        $this->payment = $this->sale
+//            ->payment($this->order->amount * 100)
+//            ->setCapture(1);
+//        $this->payment->setType("CreditCard")
+//            ->creditCard($this->paymentData->card['cvv'], $this->paymentData->card['bandeira'])
+//            ->setExpirationDate($this->paymentData->card['expiration_date'])
+//            ->setCardNumber($this->paymentData->card['card_number'])
+//            ->setHolder($this->paymentData->card['holder_name']);
+//
+//        //Verificar origem dos metodos setHolder e setCardNumber
+////        ->creditCard($this->paymentData->card->cvv, $this->paymentData->card->bandeira)
+////        ->setExpirationDate($this->paymentData->card->expiration_date)
+////        ->setCardNumber($this->paymentData->card->card_number)
+////        ->setHolder($this->paymentData->card->holder_name);
+//
+////        dd($this->pay());
+//        return $this->pay();
+//    }
+
     public function credit()
-    {
-//        dd($this->paymentData);
-
-        $this->sale->customer($this->paymentData->card['holder_name']);
-        $this->payment = $this->sale
-            ->payment($this->order->amount * 100)
-            ->setCapture(1);
-        $this->payment->setType("CreditCard")
-            ->creditCard($this->paymentData->card['cvv'], $this->paymentData->card['bandeira'])
-            ->setExpirationDate($this->paymentData->card['expiration_date'])
-            ->setCardNumber($this->paymentData->card['card_number'])
-            ->setHolder($this->paymentData->card['holder_name']);
-
-
-
-
-        //Verificar origem dos metodos setHolder e setCardNumber
-
-
-
-
-
-
-//        ->creditCard($this->paymentData->card->cvv, $this->paymentData->card->bandeira)
-//        ->setExpirationDate($this->paymentData->card->expiration_date)
-//        ->setCardNumber($this->paymentData->card->card_number)
-//        ->setHolder($this->paymentData->card->holder_name);
-
-//        dd($this->pay());
-        return $this->pay();
-    }
-
-    public function pix()
     {
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
@@ -129,12 +129,44 @@ class CieloClient
         ])->post($this->environment->getApiUrl() . "1/sales/", [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
+                "Name" => $this->paymentData->card['holder_name'],
+            ],
+            "Payment" => [
+                "Type" => "CreditCard",
+                "Authenticate" => false,
+                "Amount" => $this->order->amount * 100,
+                "CreditCard" => [
+                    "CardNumber" => $this->paymentData->card['card_number'],
+                    "Holder" => $this->paymentData->card['holder_name'],
+                    "ExpirationDate" => $this->paymentData->card['expiration_date'],
+                    "SecurityCode" => $this->paymentData->card['cvv'],
+                    "Brand" => $this->paymentData->card['bandeira'],
+                ],
+                "Installments" => "1",
+                "Capture" => true,
+            ],
+        ]);
+
+        dd($response->object());
+        return $response->object();
+    }
+
+    public function pix()
+    {
+        $identityType = preg_replace('/[^0-9]/', '', $this->paymentData->buyer['cpf_cnpj']);
+
+        $response = Http::withHeaders([
+            "Content-Type" => "application/json",
+            "MerchantId" => $this->merchant->getId(),
+            "MerchantKey" => $this->merchant->getKey(),
+            'RequestId' => $this->paymentData->reference
+
+        ])->post($this->environment->getApiUrl() . "1/sales/", [
+            "MerchantOrderId" => $this->order->reference,
+            "Customer" => [
                 "Name" => $this->paymentData->buyer['first_name'] . ' ' . $this->paymentData->buyer['last_name'],
-//                "Name" => "Nome do Pagador",
                 "Identity" => $this->paymentData->buyer['cpf_cnpj'],
-//                "Identity" => "12345678909",
-                "IdentityType" => strlen($this->paymentData->buyer['cpf_cnpj']) == 11 ? 'CPF' : 'CNPJ'
-//                "IdentityType" => "CPF"
+                "IdentityType" => strlen($identityType) == 11 ? 'CPF' : 'CNPJ'
             ],
             "Payment" => [
                 "Type" => "Pix",
@@ -142,11 +174,11 @@ class CieloClient
             ]
         ]);
 
-//        dd($response->object()->Payment->PaymentId);
+        dd($response->object());
         return $response->object();
     }
 
-    public function getPixStatus($transaction){
+    public function getStatus($transaction){
         if (getenv('APP_ENV') == 'local') {
             $environment = Environment::sandbox();
             $merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
