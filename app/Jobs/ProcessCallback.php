@@ -57,6 +57,7 @@ class ProcessCallback implements ShouldQueue
                     break;
                 case "ecommerce":
                     $response = (new CieloClient())->getStatus($this->payment->reference);
+
                     break;
                 case "picpay":
                     $this->paymentg = (new PicpayClient($this->payment))->getStatus();
@@ -67,7 +68,6 @@ class ProcessCallback implements ShouldQueue
 
             if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])){
                 $this->proccessBillets();
-
             }
         }catch (Exception $ex){
             Log::alert("Erro ao efetuar o Callback do pagamento com o ID: #{$this->payment->id}");

@@ -10,13 +10,13 @@ namespace App\Services;
 //use Cielo\API30\Merchant;
 
 use App\Models\Payment;
-use Cielo\API30\Ecommerce\CieloEcommerce;
-use Cielo\API30\Ecommerce\Customer;
-use Cielo\API30\Ecommerce\Environment;
-use Cielo\API30\Ecommerce\Request\CieloRequestException;
-use Cielo\API30\Ecommerce\Sale;
-use Cielo\API30\Ecommerce\Payment as CieloPayment;
-use Cielo\API30\Merchant;
+//use Cielo\API30\Ecommerce\CieloEcommerce;
+//use Cielo\API30\Ecommerce\Customer;
+//use Cielo\API30\Ecommerce\Environment;
+//use Cielo\API30\Ecommerce\Request\CieloRequestException;
+//use Cielo\API30\Ecommerce\Sale;
+//use Cielo\API30\Ecommerce\Payment as CieloPayment;
+//use Cielo\API30\Merchant;
 use Illuminate\Support\Facades\Http;
 
 class CieloClient
@@ -37,8 +37,7 @@ class CieloClient
 
     public function __construct(Payment $order, array $paymentData)
     {
-        if (env('APP_ENV') == 'local') {
-//            $this->environment = Environment::sandbox();
+        if (config('services.app.env') == 'local') {
             $this->merchantId = config('services.cielo.sandbox.api_merchant_id');
             $this->merchantKey = config('services.cielo.sandbox.api_merchant_key');
             $this->apiUrl = config('services.cielo.sandbox.api_url');
@@ -48,34 +47,27 @@ class CieloClient
             $this->merchantKey = config('services.cielo.production.api_merchant_key');
             $this->apiUrl = config('services.cielo.production.api_url');
             $this->apiQueryUrl = config('services.cielo.production.api_query_url');
-//            $this->environment = Environment::production();
-//            $this->merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
         }
 
         $this->order = $order;
         $this->paymentData = (object) $paymentData;
-        $this->sale = new Sale($this->order->reference);
-    }
 
-    public function debit()
-    {
-        $this->sale->customer($this->paymentData->card['holder_name']);
-        $this->payment = $this->sale
-            ->payment($this->order->amount * 100)
-            ->setCapture(1);
-        $this->payment->setAuthenticate(1)
-            ->setType('DebitCard')
-            ->debitCard($this->paymentData->card['cvv'], $this->paymentData->card['bandeira'])
-//            ->debitCard($this->paymentData->card['securityCode'], $this->paymentData['bandeira'])
-            ->setExpirationDate($this->paymentData->card['expiration_date'])
-            ->setCardNumber($this->paymentData->card['card_number'])
-            ->setHolder($this->paymentData->card['holder_name']);
-//        dd($this->pay());
-        return $this->pay();
+
+//        dd($this->paymentData);
+
+//        if(isset($payment['billets'][0]->installment)){
+//            if($payment['billets'][0]->installment > 1){
+//                $payment->installment = $payment['billets'][0]->installment;
+//            }
+//        }
+//
+//        $payment->save();
     }
 
     public function credit()
     {
+
+//        dd($this->order, $this->paymentData);
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
             "MerchantId" => $this->merchantId,
@@ -97,12 +89,40 @@ class CieloClient
                     "SecurityCode" => $this->paymentData->card['cvv'],
                     "Brand" => $this->paymentData->card['bandeira'],
                 ],
-                "Installments" => "1",
+                "Installments" => "{$this->paymentData->installment}",
                 "Capture" => true,
             ],
         ]);
 
-        return $response->object();
+//        if($response->successful()){
+//            $paymentUpdate = Payment::find($payment->id);
+//            $paymentUpdate->token = $response->object()->intencaoVenda->token;
+//            $paymentUpdate->save();
+
+            return $response->object();
+//        }else{
+//            return $response->toException();
+//        }
+
+    }
+
+    public function debit()
+    {
+//        $this->sale->customer($this->paymentData->card['holder_name']);
+//        $this->payment = $this->sale
+//            ->payment($this->order->amount * 100)
+//            ->setCapture(1);
+//        $this->payment->setAuthenticate(1)
+//            ->setType('DebitCard')
+//            ->debitCard($this->paymentData->card['cvv'], $this->paymentData->card['bandeira'])
+////            ->debitCard($this->paymentData->card['securityCode'], $this->paymentData['bandeira'])
+//            ->setExpirationDate($this->paymentData->card['expiration_date'])
+//            ->setCardNumber($this->paymentData->card['card_number'])
+//            ->setHolder($this->paymentData->card['holder_name']);
+//        dd($this->pay());
+
+        dd('debit');
+        return $this->pay();
     }
 
     public function pix()
@@ -128,7 +148,7 @@ class CieloClient
             ]
         ]);
 
-        dd($response->object());
+//        dd($response->object());
         return $response->object();
     }
 
@@ -155,10 +175,10 @@ class CieloClient
 
     private function pay()
     {
-        $this->sale = (new CieloEcommerce($this->merchant, $this->environment))->createSale($this->sale);
-        $response = $this->sale->getPayment();
+//        $this->sale = (new CieloEcommerce($this->merchant, $this->environment))->createSale($this->sale);
+//        $response = $this->sale->getPayment();
 
-//        dd('Teste: ',$response);
+        dd('Teste: ',$response);
 
         return $response;
     }

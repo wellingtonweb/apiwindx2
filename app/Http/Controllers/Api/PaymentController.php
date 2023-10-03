@@ -85,7 +85,7 @@ class PaymentController extends Controller
             switch ($payment->method) {
 
                 case "tef":
-
+//                    $payment->installment = $payment['billets'][0]->installment;
 //                    dd($payment);
 //                    $payment = (new PaygoClient())->pay($payment);
 
@@ -94,9 +94,8 @@ class PaymentController extends Controller
                     break;
 
                 case "ecommerce":
+
                     $cieloPayment = (new CieloClient($payment, $validated));
-
-
 
                     if(Str::contains($payment->payment_type,["credit", "debit"])){
                         if($payment->payment_type == "credit"){
@@ -120,29 +119,23 @@ class PaymentController extends Controller
                                 $payment->status = $payment->status;
                                 break;
                         }
+
                         if ($payment->save() && $payment->status == "approved"){
                             ProcessCallback::dispatch($payment);
                         }
+
                         $payment->message = "{$ecommercePayment->getReturnCode()} - {$ecommercePayment->getReturnMessage()}";
                     }else{
                         $ecommercePayment = $cieloPayment->pix();
+
                         $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
                         $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
                         $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
 
-
-//                        dd($payment->terminal_id);
-
                         $paymentUpdate = Payment::find($payment->id);
                         $paymentUpdate->transaction = $payment->PaymentId;
 
-//                        if($payment->terminal_id != '' || $payment->terminal_id != null){
-//                            $paymentUpdate->method = 'tef';
-//                        }
-
                         $paymentUpdate->save();
-
-//                        dd($paymentUpdate, $payment);
                     }
                     break;
 
@@ -152,7 +145,6 @@ class PaymentController extends Controller
                     $payment->qrCode = $response->qrcode->base64;
                     break;
             }
-
         }
 
         return new PaymentResource($payment);
@@ -184,9 +176,9 @@ class PaymentController extends Controller
 
             $cieloPayment = CieloClient::getStatus($payment->transaction);
 
-            if($payment->terminal_id != '' || $payment->terminal_id != null){
-                $payment->method = 'tef';
-            }
+//            if($payment->terminal_id != '' || $payment->terminal_id != null){
+//                $payment->method = 'tef';
+//            }
 
             switch ($cieloPayment->object()->Payment->Status){
                 case 2:

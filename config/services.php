@@ -30,7 +30,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'app_env' => env('APP_ENV'),
+    'app' => [
+        'env' => env('APP_ENV'),
+    ],
 
     'cielo' => [
         'sandbox' => [
