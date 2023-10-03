@@ -84,66 +84,69 @@ class PaymentController extends Controller
         if ($payment) {
             switch ($payment->method) {
 
-                case "tef":
-//                    $payment->installment = $payment['billets'][0]->installment;
+                case "tef": {
+                    //                    $payment->installment = $payment['billets'][0]->installment;
 //                    dd($payment);
 //                    $payment = (new PaygoClient())->pay($payment);
 
                     $response = (new PaygoClient())->pay($payment);
 //                    dd($response);
                     break;
+                }
 
-                case "ecommerce":
-
+                case "ecommerce": {
                     $cieloPayment = (new CieloClient($payment, $validated));
 
-                    if(Str::contains($payment->payment_type,["credit", "debit"])){
-                        if($payment->payment_type == "credit"){
+                    $ecommercePayment = null;
+
+                    switch($payment->payment_type) {
+                        case 'credit': {
                             $ecommercePayment = $cieloPayment->credit();
-                        }else{
+                            break;
+                        }
+
+                        case 'debit': {
                             $ecommercePayment = $cieloPayment->debit();
+                            break;
                         }
 
-                        dd($ecommercePayment);
+                        case 'pix': {
+                            $ecommercePayment = $cieloPayment->pix();
 
-                        switch ($ecommercePayment->getStatus()){
-                            case 2:
-                                $payment->status = "approved";
-                                break;
-                            case 3:
-                            case 10:
-                            case 13:
-                                $payment->status = "refused";
-                                break;
-                            default:
-                                $payment->status = $payment->status;
-                                break;
+//                            dd($payment, $ecommercePayment);
+
+                            $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
+                            $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
+                            $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
+
+//                            $paymentUpdate = Payment::find($payment->id);
+//                            $paymentUpdate->transaction = $payment->PaymentId;
+
+                            break;
                         }
-
-                        if ($payment->save() && $payment->status == "approved"){
-                            ProcessCallback::dispatch($payment);
-                        }
-
-                        $payment->message = "{$ecommercePayment->getReturnCode()} - {$ecommercePayment->getReturnMessage()}";
-                    }else{
-                        $ecommercePayment = $cieloPayment->pix();
-
-                        $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
-                        $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
-                        $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
-
-                        $paymentUpdate = Payment::find($payment->id);
-                        $paymentUpdate->transaction = $payment->PaymentId;
-
-                        $paymentUpdate->save();
                     }
-                    break;
 
-                case "picpay":
+//                    dd($ecommercePayment);
+
+                    $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+
+                    if ($payment->save() && $payment->status == "approved"){
+                        $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                        dd('ProcessCallback dispatch');
+                        //ProcessCallback::dispatch($payment);
+                    }
+
+//                    $payment->save();
+
+                    break;
+                }
+
+                case "picpay": {
                     $buyer = (object)$validated['buyer'];
                     $response = (new PicpayClient($payment))->pay($buyer);
                     $payment->qrCode = $response->qrcode->base64;
                     break;
+                }
             }
         }
 

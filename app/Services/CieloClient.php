@@ -152,25 +152,38 @@ class CieloClient
         return $response->object();
     }
 
-    public function getStatus($transaction){
-//        if (getenv('APP_ENV') == 'local') {
-//            $environment = Environment::sandbox();
-//            $merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
-//        } else {
-//            $environment = Environment::production();
-//            $merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
-//        }
+    public function getStatus($transaction)
+    {
 
-       $payment = Http::withHeaders([
+        $payment = Http::withHeaders([
             "Content-Type" => "application/json",
-//            "MerchantId" => $this->merchant->getId(),
             "MerchantId" => $this->merchantId,
             "MerchantKey" => $this->merchantKey,
-//            "MerchantKey" => $merchant->getKey(),
         ])->get($this->apiQueryUrl . "1/sales/" . $transaction);
-//        ])->get($environment->getApiQueryURL(). "1/sales/". $transaction);
 
         return $payment;
+    }
+
+    public function rewriteStatus($status){
+
+        $statusUpdated = "created";
+
+        switch ($status){
+            case 2:
+                $statusUpdated = "approved";
+                break;
+            case 3:
+            case 10:
+            case 13:
+                $statusUpdated = "refused";
+                break;
+            case 12:
+            default:
+                $statusUpdated = $statusUpdated;
+                break;
+        }
+
+        return $statusUpdated;
     }
 
     private function pay()
