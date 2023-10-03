@@ -77,13 +77,10 @@ class PaymentController extends Controller
             $validated['reference'] = (Str::uuid())->toString();
         }
 
-//        dd($validated);
-
         $payment = (Payment::create($validated))->load('terminal');
 
         if ($payment) {
             switch ($payment->method) {
-
                 case "tef": {
                     //                    $payment->installment = $payment['billets'][0]->installment;
 //                    dd($payment);
@@ -93,10 +90,8 @@ class PaymentController extends Controller
 //                    dd($response);
                     break;
                 }
-
                 case "ecommerce": {
                     $cieloPayment = (new CieloClient($payment, $validated));
-
                     $ecommercePayment = null;
 
                     switch($payment->payment_type) {
@@ -112,7 +107,6 @@ class PaymentController extends Controller
                             }
                             break;
                         }
-
                         case 'debit': {
                             $ecommercePayment = $cieloPayment->debit();
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
@@ -125,7 +119,6 @@ class PaymentController extends Controller
                             }
                             break;
                         }
-
                         case 'pix': {
                             $ecommercePayment = $cieloPayment->pix();
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
@@ -140,7 +133,6 @@ class PaymentController extends Controller
 
                     break;
                 }
-
                 case "picpay": {
                     $buyer = (object)$validated['buyer'];
                     $response = (new PicpayClient($payment))->pay($buyer);
