@@ -37,54 +37,25 @@ class CieloClient
 
     public function __construct(Payment $order, array $paymentData)
     {
-//        if (getenv('APP_ENV') == 'local') {
+        if (env('APP_ENV') == 'local') {
 //            $this->environment = Environment::sandbox();
-//            $this->merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
-//        } else {
-//            $this->environment = Environment::production();
-//            $this->merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
-//        }
-
-        if (getenv('APP_ENV') == 'local') {
-//            $this->environment = Environment::sandbox();
-            $this->merchantId = "pegar variaveis do env de forma segura.";
-            $this->merchantKey = "pegar variaveis do env de forma segura.";
-            $this->apiUrl = "pegar variaveis do env de forma segura.";
-            $this->apiQueryUrl = "pegar variaveis do env de forma segura.";
+            $this->merchantId = config('services.cielo.sandbox.api_merchant_id');
+            $this->merchantKey = config('services.cielo.sandbox.api_merchant_key');
+            $this->apiUrl = config('services.cielo.sandbox.api_url');
+            $this->apiQueryUrl = config('services.cielo.sandbox.api_query_url');
         } else {
-            $this->merchantId = "pegar variaveis do env de forma segura.";
-            $this->merchantKey = "pegar variaveis do env de forma segura.";
-            $this->apiUrl = "pegar variaveis do env de forma segura.";
-            $this->apiQueryUrl = "pegar variaveis do env de forma segura.";
+            $this->merchantId = config('services.cielo.production.api_merchant_id');
+            $this->merchantKey = config('services.cielo.production.api_merchant_key');
+            $this->apiUrl = config('services.cielo.production.api_url');
+            $this->apiQueryUrl = config('services.cielo.production.api_query_url');
 //            $this->environment = Environment::production();
 //            $this->merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
         }
 
-//        $this->order = $order;
-//        $this->paymentData = (object) $paymentData;
-//        $this->sale = new Sale($this->order->reference);
-//        $this->sale->customer($this->paymentData->holder_name);
-//        $this->payment = $this->sale
-//            ->payment($this->order->amount * 100)
-//            ->setCapture(1);
-
         $this->order = $order;
         $this->paymentData = (object) $paymentData;
         $this->sale = new Sale($this->order->reference);
-
-//        dd($this->sale, $this->paymentData, $this->order);
     }
-
-//    public function debit()
-//    {
-//        $this->payment->setAuthenticate(1)
-//            ->setType('DebitCard')
-//            ->debitCard($this->paymentData->securityCode, $this->paymentData->bandeira)
-//            ->setExpirationDate($this->paymentData->expiration_date)
-//            ->setCardNumber($this->paymentData->card_number)
-//            ->setHolder($this->paymentData->full_name);
-//        return $this->pay();
-//    }
 
     public function debit()
     {
@@ -103,39 +74,14 @@ class CieloClient
         return $this->pay();
     }
 
-//    public function credit()
-//    {
-////        dd($this->paymentData);
-//
-//        $this->sale->customer($this->paymentData->card['holder_name']);
-//        $this->payment = $this->sale
-//            ->payment($this->order->amount * 100)
-//            ->setCapture(1);
-//        $this->payment->setType("CreditCard")
-//            ->creditCard($this->paymentData->card['cvv'], $this->paymentData->card['bandeira'])
-//            ->setExpirationDate($this->paymentData->card['expiration_date'])
-//            ->setCardNumber($this->paymentData->card['card_number'])
-//            ->setHolder($this->paymentData->card['holder_name']);
-//
-//        //Verificar origem dos metodos setHolder e setCardNumber
-////        ->creditCard($this->paymentData->card->cvv, $this->paymentData->card->bandeira)
-////        ->setExpirationDate($this->paymentData->card->expiration_date)
-////        ->setCardNumber($this->paymentData->card->card_number)
-////        ->setHolder($this->paymentData->card->holder_name);
-//
-////        dd($this->pay());
-//        return $this->pay();
-//    }
-
     public function credit()
     {
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
-            "MerchantId" => $this->merchant->getId(),
-            "MerchantKey" => $this->merchant->getKey(),
-            'RequestId' => $this->paymentData->reference
-
-        ])->post($this->environment->getApiUrl() . "1/sales/", [
+            "MerchantId" => $this->merchantId,
+            "MerchantKey" => $this->merchantKey,
+            "RequestId" => $this->paymentData->reference
+        ])->post($this->apiUrl . "1/sales/", [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
                 "Name" => $this->paymentData->card['holder_name'],
@@ -156,7 +102,6 @@ class CieloClient
             ],
         ]);
 
-        dd($response->object());
         return $response->object();
     }
 
@@ -166,11 +111,11 @@ class CieloClient
 
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
-            "MerchantId" => $this->merchant->getId(),
-            "MerchantKey" => $this->merchant->getKey(),
+            "MerchantId" => $this->merchantId,
+            "MerchantKey" => $this->merchantKey,
             'RequestId' => $this->paymentData->reference
 
-        ])->post($this->environment->getApiUrl() . "1/sales/", [
+        ])->post($this->apiUrl . "1/sales/", [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
                 "Name" => $this->paymentData->buyer['first_name'] . ' ' . $this->paymentData->buyer['last_name'],
@@ -188,22 +133,22 @@ class CieloClient
     }
 
     public function getStatus($transaction){
-        if (getenv('APP_ENV') == 'local') {
-            $environment = Environment::sandbox();
-            $merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
-        } else {
-            $environment = Environment::production();
-            $merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
-        }
+//        if (getenv('APP_ENV') == 'local') {
+//            $environment = Environment::sandbox();
+//            $merchant = (new Merchant(getenv('CIELO_SANDBOX_MERCHANT_ID'), getenv('CIELO_SANDBOX_MERCHANT_KEY')));
+//        } else {
+//            $environment = Environment::production();
+//            $merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
+//        }
 
        $payment = Http::withHeaders([
             "Content-Type" => "application/json",
 //            "MerchantId" => $this->merchant->getId(),
-            "MerchantId" => $merchant->getId(),
-//            "MerchantKey" => $this->merchant->getKey(),
-            "MerchantKey" => $merchant->getKey(),
-//        ])->get($this->environment->getApiQueryURL(). "1/sales/". $transaction);
-        ])->get($environment->getApiQueryURL(). "1/sales/". $transaction);
+            "MerchantId" => $this->merchantId,
+            "MerchantKey" => $this->merchantKey,
+//            "MerchantKey" => $merchant->getKey(),
+        ])->get($this->apiQueryUrl . "1/sales/" . $transaction);
+//        ])->get($environment->getApiQueryURL(). "1/sales/". $transaction);
 
         return $payment;
     }

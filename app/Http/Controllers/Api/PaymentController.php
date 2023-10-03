@@ -96,6 +96,8 @@ class PaymentController extends Controller
                 case "ecommerce":
                     $cieloPayment = (new CieloClient($payment, $validated));
 
+
+
                     if(Str::contains($payment->payment_type,["credit", "debit"])){
                         if($payment->payment_type == "credit"){
                             $ecommercePayment = $cieloPayment->credit();
@@ -103,7 +105,7 @@ class PaymentController extends Controller
                             $ecommercePayment = $cieloPayment->debit();
                         }
 
-//                        dd($ecommercePayment);
+                        dd($ecommercePayment);
 
                         switch ($ecommercePayment->getStatus()){
                             case 2:
