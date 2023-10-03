@@ -25,6 +25,8 @@ class CieloClient
     protected $merchant;
     protected $merchantId;
     protected $merchantKey;
+    protected $apiUrl;
+    protected $apiQueryUrl;
     protected $client;
     protected $paymentData;
     protected $order;
@@ -45,10 +47,17 @@ class CieloClient
 
         if (getenv('APP_ENV') == 'local') {
 //            $this->environment = Environment::sandbox();
-            $this->merchantId =
+            $this->merchantId = "pegar variaveis do env de forma segura.";
+            $this->merchantKey = "pegar variaveis do env de forma segura.";
+            $this->apiUrl = "pegar variaveis do env de forma segura.";
+            $this->apiQueryUrl = "pegar variaveis do env de forma segura.";
         } else {
-            $this->environment = Environment::production();
-            $this->merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
+            $this->merchantId = "pegar variaveis do env de forma segura.";
+            $this->merchantKey = "pegar variaveis do env de forma segura.";
+            $this->apiUrl = "pegar variaveis do env de forma segura.";
+            $this->apiQueryUrl = "pegar variaveis do env de forma segura.";
+//            $this->environment = Environment::production();
+//            $this->merchant = (new Merchant(getenv('CIELO_PROD_MERCHANT_ID'), getenv('CIELO_PROD_MERCHANT_KEY')));
         }
 
 //        $this->order = $order;
