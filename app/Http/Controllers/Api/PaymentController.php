@@ -102,41 +102,41 @@ class PaymentController extends Controller
                     switch($payment->payment_type) {
                         case 'credit': {
                             $ecommercePayment = $cieloPayment->credit();
+                            $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+
+                            if ($payment->save() && $payment->status == "approved"){
+                                $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                $payment->save();
+                                dd('ProcessCallback dispatch');
+                                //ProcessCallback::dispatch($payment);
+                            }
                             break;
                         }
 
                         case 'debit': {
                             $ecommercePayment = $cieloPayment->debit();
+                            $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+
+                            if ($payment->save() && $payment->status == "approved"){
+                                $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                $payment->save();
+                                dd('ProcessCallback dispatch');
+                                //ProcessCallback::dispatch($payment);
+                            }
                             break;
                         }
 
                         case 'pix': {
                             $ecommercePayment = $cieloPayment->pix();
-
-//                            dd($payment, $ecommercePayment);
+                            $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+                            $payment->save();
 
                             $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
                             $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
                             $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
-
-//                            $paymentUpdate = Payment::find($payment->id);
-//                            $paymentUpdate->transaction = $payment->PaymentId;
-
                             break;
                         }
                     }
-
-//                    dd($ecommercePayment);
-
-                    $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
-
-                    if ($payment->save() && $payment->status == "approved"){
-                        $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
-                        dd('ProcessCallback dispatch');
-                        //ProcessCallback::dispatch($payment);
-                    }
-
-//                    $payment->save();
 
                     break;
                 }
