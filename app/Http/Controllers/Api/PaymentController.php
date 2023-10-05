@@ -2,21 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-//use App\Jobs\ProcessCallback;
-//use App\Jobs\ProcessRevertPayment;
-//use App\Models\Payment;
-//use App\Services\CieloClient;
-//use App\Services\PaygoClient;
-//use App\Services\PicpayClient;
-//use Illuminate\Http\Request;
-//use App\Http\Controllers\Controller;
-//use App\Http\Resources\PaymentResource;
-//use App\Http\Resources\PaymentCollection;
-//use App\Http\Requests\PaymentRequest;
-//use App\Http\Requests\PaymentUpdateRequest;
-//use Illuminate\Support\Str;
-//use Ramsey\Uuid\Uuid;
-
 use App\Helpers\Functions;
 use App\Jobs\ProcessCallback;
 use App\Jobs\ProcessRevertPayment;
@@ -24,10 +9,6 @@ use App\Models\Payment;
 use App\Services\CieloClient;
 use App\Services\PaygoClient;
 use App\Services\PicpayClient;
-use Cielo\API30\Ecommerce\Environment;
-use Cielo\API30\Ecommerce\Request\QuerySaleRequest;
-use Cielo\API30\Ecommerce\CieloEcommerce;
-use Cielo\API30\Merchant;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
@@ -95,9 +76,19 @@ class PaymentController extends Controller
 
                             if ($payment->save() && $payment->status == "approved"){
                                 $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                $payment->installment = $ecommercePayment->Payment->Installments;
+                                $payment->receipt = [
+                                    'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
+                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
+                                    'card_ent_mode' => null,//approximation or password -> criar função
+                                    'payer' => $ecommercePayment->Payment->CreditCard->Holder,
+                                    'in_installments' => $ecommercePayment->Payment->Installments,
+                                    'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                    'receipt' => null
+                                ];
                                 $payment->save();
 //                                dd('ProcessCallback dispatch - credit');
-                                //ProcessCallback::dispatch($payment);
+                                ProcessCallback::dispatch($payment);
                             }
                             break;
                         }
@@ -107,9 +98,19 @@ class PaymentController extends Controller
 
                             if ($payment->save() && $payment->status == "approved"){
                                 $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                $payment->receipt = [
+                                    'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
+                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
+                                    'approximation' => null,
+                                    'with_password' => "TRANSACAO AUTORIZADA COM SENHA",
+                                    'payer' => $ecommercePayment->Payment->CreditCard->Holder,
+                                    'in_installments' => null,
+                                    'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                    'receipt' => null
+                                ];
                                 $payment->save();
-                                dd('ProcessCallback dispatch - debit');
-                                //ProcessCallback::dispatch($payment);
+                                dd('ProcessCallback dispatch - debit', $payment, $ecommercePayment);
+                                ProcessCallback::dispatch($payment);
                             }
                             break;
                         }
@@ -159,66 +160,6 @@ class PaymentController extends Controller
 //        if ($payment && $payment['status'] === "created") {
             ProcessCallback::dispatch($payment);
         }
-
-//        if ($payment->payment_type == "pix"){
-//
-//            $payment->status = CieloClient::getStatus($payment->transaction);
-//
-//            if ($payment->save() && $payment->status == "approved"){
-//                dd('Process Callback - Pix');
-//                //ProcessCallback::dispatch($payment);
-//            }else{
-//                dd('Payment Pix Status: '+ $payment->status);
-//            }
-//        }
-//        elseif($payment->method == "tef"){
-////        elseif($payment->method == "tef" && $payment->payment_type != "pix"){
-//
-////            dd($payment);
-//
-//            $response = (new PaygoClient())->getPaymentStatus($payment->reference);
-//
-////            dd($response);
-//
-//            switch ($response->intencoesVendas[0]->intencaoVendaStatus->id){
-//                case 10:
-//                    $payment->status = "approved";
-//                    break;
-//                case 18:
-//                case 19:
-//                case 20:
-//                    $payment->status = "canceled";
-//                    break;
-//                case 15:
-//                    $payment->status = "expired";
-//                    break;
-//                case 25:
-//                    $payment->status = "refused";
-//                    break;
-//                default:
-//                    $payment->status = "created";
-//                    break;
-//            }
-//
-//            if ($payment->save() && $payment->status == "approved"){
-//
-//                $payment->transaction = $response->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
-//                $payment->receipt = Functions::receiptFormat($response->intencoesVendas[0]->pagamentosExternos[0]);
-//
-//                $payment->save();
-//
-////                dd($payment);
-//
-//                ProcessCallback::dispatch($payment);
-//
-////                dd($payment->getAttributes());
-////                dd($payment->getAttributes()['customer']);
-//            }else{
-//                $payment->receipt = null;
-//                $payment->save();
-//            }
-//
-//        }
 
         return new PaymentResource($payment);
     }

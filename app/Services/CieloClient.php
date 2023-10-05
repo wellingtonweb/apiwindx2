@@ -166,12 +166,10 @@ class CieloClient
             "MerchantKey" => $ev['merchantKey'],
         ])->get("{$ev['apiQueryUrl']}1/sales/{$transaction}");
 
-//        dd()
-
-        $status = self::rewriteStatus($response->object()->Payment->Status);
-//
-        return $status;
-//        return $response->object();
+        return [
+            'status' => self::rewriteStatus($response->object()->Payment->Status),
+            'payment' => $response->object(),
+        ];
     }
 
     public function rewriteStatus($status){

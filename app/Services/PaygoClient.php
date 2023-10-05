@@ -119,7 +119,7 @@ class PaygoClient
         }
     }
 
-    public function getPaymentStatus($reference)
+    public function getStatus($reference)
     {
         $response = Http::withHeaders([
             "Content-Type" => "application/json"
@@ -128,7 +128,12 @@ class PaygoClient
         ]);
 
         if($response->successful()){
-            return $response->object();
+            return [
+                'status' => self::rewriteStatus($response->object()->intencoesVendas[0]->intencaoVendaStatus->id),
+                'payment' => $response->object(),
+            ];
+
+//            return $response->object();
         }else{
             return $response->toException();
         }
@@ -179,6 +184,33 @@ class PaygoClient
             return $response->toException();
         }
 
+    }
+
+    public function rewriteStatus($status){
+
+        $statusUpdated = "created";
+
+        switch ($status){
+            case 10:
+                $statusUpdated = "approved";
+                break;
+            case 18:
+            case 19:
+            case 20:
+                $statusUpdated = "canceled";
+                break;
+            case 15:
+                $statusUpdated = "expired";
+                break;
+            case 25:
+                $statusUpdated = "refused";
+                break;
+            default:
+                $statusUpdated = "created";
+                break;
+        }
+
+        return $statusUpdated;
     }
 
 }

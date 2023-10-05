@@ -52,23 +52,44 @@ class ProcessCallback implements ShouldQueue
 
         try{
             switch ($this->payment->method) {
-                case "tef": {
-                    //$this->payment->status = (new PaygoClient())->getPaymentById($this->payment->reference);
+                case "tef":
+                {
+                    $response = (new PaygoClient())->getStatus($this->payment->reference);
+                    $this->payment->status = $response['status'];
+                    $this->payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
+
+                    if ($this->payment->save() && $this->payment->status == "approved"){
+                        $this->payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+
+                        //"CRIAR FUNÇÃO PARA TRATAR OS DADOS DO CUPOM"
+                        $this->payment->receipt = [
+                            'card_number' => null,
+                            'flag' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->bandeira,
+                            'card_ent_mode' => null,//approximation or password
+                            'payer' => null,
+                            'transaction_code' => null,
+                            'receipt' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente
+                        ];
+                    }
+
+                    $this->payment->save();
                     dd('TEf');
                     break;
                 }
-                case "ecommerce": {
-
-//                    dd('Ecommerce', $payment, $payment['status']);
-                    $this->payment->status = CieloClient::getStatus($this->payment->transaction);
+                case "ecommerce":
+                {
+                    $response = CieloClient::getStatus($this->payment->transaction);
+                    $this->payment->status = $response['status'];
 
                     $ecommercePayment = null;
 
                     if(Str::contains($this->payment->payment_type,["credit", "debit"]))
                     {
-                        $this->payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                        if ($this->payment->save() && $this->payment->status == "approved"){
+                            $this->payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                            $this->payment->receipt = null;
+                        }
                     }
-                    $this->payment->receipt = null;
 
                     $this->payment->save();
                     dd('ecommerce', $this->payment->payment_type, $this->payment->status);
