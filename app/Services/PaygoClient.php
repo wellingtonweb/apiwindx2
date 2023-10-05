@@ -165,11 +165,13 @@ class PaygoClient
         }
     }
 
-    public function cancelPayment()
+    //Enviar $paymentId
+    public function cancelPayment($paymentId)
     {
+
         $response = Http::withHeaders([
             "Content-Type" => "application/json"
-        ])->post("{$this->url}/Venda/CancelarVenda?key={$this->key}", $body);
+        ])->get("{$this->url}/Venda/CancelarVenda?key={$this->key}&pedidoId={$paymentId}");
 
         if($response->successful()){
             return $response->json();

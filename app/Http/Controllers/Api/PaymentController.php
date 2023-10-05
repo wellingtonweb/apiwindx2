@@ -58,8 +58,6 @@ class PaymentController extends Controller
         return new PaymentCollection($payments);
     }
 
-
-
     /**
      * @param  \App\Http\Requests\PaymentRequest  $request
      * @return PaymentResource
@@ -82,10 +80,6 @@ class PaymentController extends Controller
         if ($payment) {
             switch ($payment->method) {
                 case "tef": {
-                    //                    $payment->installment = $payment['billets'][0]->installment;
-//                    dd($payment);
-//                    $payment = (new PaygoClient())->pay($payment);
-
                     $response = (new PaygoClient())->pay($payment);
 //                    dd($response);
                     break;
@@ -102,7 +96,7 @@ class PaymentController extends Controller
                             if ($payment->save() && $payment->status == "approved"){
                                 $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
                                 $payment->save();
-                                dd('ProcessCallback dispatch');
+//                                dd('ProcessCallback dispatch - credit');
                                 //ProcessCallback::dispatch($payment);
                             }
                             break;
@@ -114,7 +108,7 @@ class PaymentController extends Controller
                             if ($payment->save() && $payment->status == "approved"){
                                 $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
                                 $payment->save();
-                                dd('ProcessCallback dispatch');
+                                dd('ProcessCallback dispatch - debit');
                                 //ProcessCallback::dispatch($payment);
                             }
                             break;
@@ -161,92 +155,70 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-//        if (
-//            $payment->method == "ecommerce" and $payment->payment_type == "pix" )
-////            ($payment->method == "tef" and $payment->payment_type == "pix"))
-//        {
-//        dd($payment);
+        if ($payment) {
+//        if ($payment && $payment['status'] === "created") {
+            ProcessCallback::dispatch($payment);
+        }
 
-        if ($payment->payment_type == "pix"){
-
-            $cieloPayment = CieloClient::getStatus($payment->transaction);
-
-//            if($payment->terminal_id != '' || $payment->terminal_id != null){
-//                $payment->method = 'tef';
+//        if ($payment->payment_type == "pix"){
+//
+//            $payment->status = CieloClient::getStatus($payment->transaction);
+//
+//            if ($payment->save() && $payment->status == "approved"){
+//                dd('Process Callback - Pix');
+//                //ProcessCallback::dispatch($payment);
+//            }else{
+//                dd('Payment Pix Status: '+ $payment->status);
 //            }
-
-            switch ($cieloPayment->object()->Payment->Status){
-                case 2:
-                    $payment->status = "approved";
-                    break;
-                case 3:
-                case 10:
-                case 13:
-                    $payment->status = "refused";
-                    break;
-                default:
-                    $payment->status = "created";
-                    break;
-            }
-
-//            dd($cieloPayment->object());
-
-
-                $payment->save();
-
-            if ($payment->save() && $payment->status == "approved"){
-
-                ProcessCallback::dispatch($payment);
-            }
-        }
-        elseif($payment->method == "tef"){
-//        elseif($payment->method == "tef" && $payment->payment_type != "pix"){
-
-//            dd($payment);
-
-            $response = (new PaygoClient())->getPaymentStatus($payment->reference);
-
-//            dd($response);
-
-            switch ($response->intencoesVendas[0]->intencaoVendaStatus->id){
-                case 10:
-                    $payment->status = "approved";
-                    break;
-                case 18:
-                case 19:
-                case 20:
-                    $payment->status = "canceled";
-                    break;
-                case 15:
-                    $payment->status = "expired";
-                    break;
-                case 25:
-                    $payment->status = "refused";
-                    break;
-                default:
-                    $payment->status = "created";
-                    break;
-            }
-
-            if ($payment->save() && $payment->status == "approved"){
-
-                $payment->transaction = $response->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
-                $payment->receipt = Functions::receiptFormat($response->intencoesVendas[0]->pagamentosExternos[0]);
-
-                $payment->save();
-
-//                dd($payment);
-
-                ProcessCallback::dispatch($payment);
-
-//                dd($payment->getAttributes());
-//                dd($payment->getAttributes()['customer']);
-            }else{
-                $payment->receipt = null;
-                $payment->save();
-            }
-
-        }
+//        }
+//        elseif($payment->method == "tef"){
+////        elseif($payment->method == "tef" && $payment->payment_type != "pix"){
+//
+////            dd($payment);
+//
+//            $response = (new PaygoClient())->getPaymentStatus($payment->reference);
+//
+////            dd($response);
+//
+//            switch ($response->intencoesVendas[0]->intencaoVendaStatus->id){
+//                case 10:
+//                    $payment->status = "approved";
+//                    break;
+//                case 18:
+//                case 19:
+//                case 20:
+//                    $payment->status = "canceled";
+//                    break;
+//                case 15:
+//                    $payment->status = "expired";
+//                    break;
+//                case 25:
+//                    $payment->status = "refused";
+//                    break;
+//                default:
+//                    $payment->status = "created";
+//                    break;
+//            }
+//
+//            if ($payment->save() && $payment->status == "approved"){
+//
+//                $payment->transaction = $response->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+//                $payment->receipt = Functions::receiptFormat($response->intencoesVendas[0]->pagamentosExternos[0]);
+//
+//                $payment->save();
+//
+////                dd($payment);
+//
+//                ProcessCallback::dispatch($payment);
+//
+////                dd($payment->getAttributes());
+////                dd($payment->getAttributes()['customer']);
+//            }else{
+//                $payment->receipt = null;
+//                $payment->save();
+//            }
+//
+//        }
 
         return new PaymentResource($payment);
     }

@@ -51,27 +51,79 @@ class ProcessCallback implements ShouldQueue
         */
 
         try{
-            switch ($this->payment->method){
-                case "tef":
-                    //$response = (new PaygoClient())->getPaymentById($this->payment->reference);
+            switch ($this->payment->method) {
+                case "tef": {
+                    //$this->payment->status = (new PaygoClient())->getPaymentById($this->payment->reference);
+                    dd('TEf');
                     break;
-                case "ecommerce":
-                    $response = (new CieloClient())->getStatus($this->payment->reference);
+                }
+                case "ecommerce": {
+
+//                    dd('Ecommerce', $payment, $payment['status']);
+                    $this->payment->status = CieloClient::getStatus($this->payment->transaction);
+
+                    $ecommercePayment = null;
+
+                    if(Str::contains($this->payment->payment_type,["credit", "debit"]))
+                    {
+                        $this->payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                    }
+                    $this->payment->receipt = null;
+
+                    $this->payment->save();
+                    dd('ecommerce', $this->payment->payment_type, $this->payment->status);
+
+//                    switch($this->payment->payment_type) {
+//                        case 'debit':
+//                        case 'credit': {
+//
+//                            break;
+//                        }
+//
+//                        case 'pix': {
+//                            if ($this->payment->save() && $this->payment->status == "approved"){
+//                                //$ecommercePayment->Payment->AuthorizationCode;
+//                                $this->payment->save();
+//
+//                            }
+//                            break;
+//                        }
+//                    }
 
                     break;
-                case "picpay":
-                    $this->paymentg = (new PicpayClient($this->payment))->getStatus();
+                }
+                case "picpay": {
+                    $this->payment->status = (new PicpayClient($this->payment))->getStatus()->status;
+                    dd('picpay', $this->payment->status);
                     break;
-                default:
+                }
+                default: {
                     break;
+                }
+
             }
+
+
+//            switch ($this->payment->method){
+//                case "tef":
+//                    //$this->payment->status = (new PaygoClient())->getPaymentById($this->payment->reference);
+//                    break;
+//                case "ecommerce":
+//                    $this->payment->status = (new CieloClient())->getStatus($this->payment->reference);
+//                    break;
+//                case "picpay":
+//                    $this->payment->status = (new PicpayClient($this->payment))->getStatus()->status;
+//                    break;
+//                default:
+//                    break;
+//            }
 
             if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])){
                 $this->proccessBillets();
             }
         }catch (Exception $ex){
+            //Armazenar estes erros no banco de dados
             Log::alert("Erro ao efetuar o Callback do pagamento com o ID: #{$this->payment->id}");
-
         }
 
     }

@@ -243,6 +243,9 @@ class VigoClient
 //                "id_caixa" => "{$this->caixa}",
                 "valor_pago" => "{$billet->total}"
             ]);
+
+        dd($response->object());
+
         if ($response->successful()) {
 
             return $response->object();
