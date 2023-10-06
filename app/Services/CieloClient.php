@@ -66,13 +66,27 @@ class CieloClient
     {
         $ev = self::enviroment();
 
+        $initTransInd = [
+            'Category' => null,
+            'Subcategory' => null,
+        ];
+
+        if($this->paymentData->card['bandeira'] == 'Master'){
+            if($this->order->recurrent == true){
+                $initTransInd = [
+                    'Category' => "M1",
+                    'Subcategory' => "Subscription",
+                ];
+            }
+        }
+
 //        dd($this->order, $this->paymentData);
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
-            "MerchantId" => $this->merchantId,
-            "MerchantKey" => $this->merchantKey,
+            "MerchantId" => $ev['merchantId'],
+            "MerchantKey" => $ev['merchantKey'],
             "RequestId" => $this->paymentData->reference
-        ])->post($this->apiUrl . "1/sales/", [
+        ])->post("{$ev['apiUrl']}1/sales/", [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
                 "Name" => $this->paymentData->card['holder_name'],
@@ -88,8 +102,9 @@ class CieloClient
                     "SecurityCode" => $this->paymentData->card['cvv'],
                     "Brand" => $this->paymentData->card['bandeira'],
                 ],
-                "Installments" => "{$this->paymentData->installment}",
+                "Installments" => "{$this->paymentData->installment}",//se for recorrencia = 1
                 "Capture" => true,
+                "InitiatedTransactionIndicator" => $initTransInd
             ],
         ]);
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Helpers\Functions;
+use App\Helpers\Payments;
 use App\Jobs\ProcessCallback;
 use App\Jobs\ProcessRevertPayment;
 use App\Models\Payment;
@@ -72,7 +73,9 @@ class PaymentController extends Controller
                     switch($payment->payment_type) {
                         case 'credit': {
                             $ecommercePayment = $cieloPayment->credit();
+
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+//                            dd($payment->status, $ecommercePayment);
 
                             if ($payment->save() && $payment->status == "approved"){
                                 $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
@@ -80,14 +83,19 @@ class PaymentController extends Controller
                                 $payment->receipt = [
                                     'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
                                     'flag' => $ecommercePayment->Payment->CreditCard->Brand,
-                                    'card_ent_mode' => null,//approximation or password -> criar função
+                                    'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
                                     'payer' => $ecommercePayment->Payment->CreditCard->Holder,
                                     'in_installments' => $ecommercePayment->Payment->Installments,
                                     'transaction_code' => $ecommercePayment->Payment->PaymentId,
                                     'receipt' => null
                                 ];
                                 $payment->save();
-//                                dd('ProcessCallback dispatch - credit');
+//                                dd('ProcessCallback dispatch - credit '.$payment->status);
+                                ProcessCallback::dispatch($payment);
+//                                Payments::proccessingBillets($payment);
+                            }else{
+                                $payment->installment = $ecommercePayment->Payment->Installments;
+                                $payment->save();
                                 ProcessCallback::dispatch($payment);
                             }
                             break;
@@ -116,6 +124,7 @@ class PaymentController extends Controller
                         }
                         case 'pix': {
                             $ecommercePayment = $cieloPayment->pix();
+                            $payment->transaction = $ecommercePayment->Payment->PaymentId;
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
                             $payment->save();
 

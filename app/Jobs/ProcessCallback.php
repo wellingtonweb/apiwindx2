@@ -7,6 +7,7 @@ use App\Services\CieloClient;
 use App\Services\PaygoClient;
 use App\Services\PicpayClient;
 use App\Services\VigoClient;
+use App\Jobs\ProcessBillets;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -32,6 +33,7 @@ class ProcessCallback implements ShouldQueue
     public function __construct(Payment $payment)
     {
         $this->payment = $payment;
+//        dd($this->payment);
     }
 
     /**
@@ -54,68 +56,94 @@ class ProcessCallback implements ShouldQueue
             switch ($this->payment->method) {
                 case "tef":
                 {
-                    $response = (new PaygoClient())->getStatus($this->payment->reference);
-                    $this->payment->status = $response['status'];
-                    $this->payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
-
-                    if ($this->payment->save() && $this->payment->status == "approved"){
-                        $this->payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
-
-                        //"CRIAR FUNÇÃO PARA TRATAR OS DADOS DO CUPOM"
-                        $this->payment->receipt = [
-                            'card_number' => null,
-                            'flag' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->bandeira,
-                            'card_ent_mode' => null,//approximation or password
-                            'payer' => null,
-                            'transaction_code' => null,
-                            'receipt' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente
-                        ];
+                    if(Str::contains($this->payment->status, ['approved', 'canceled','chargeback']))
+                    {
+                        $this->proccessBillets();
                     }
+                    else
+                    {
+                        $response = (new PaygoClient())->getStatus($this->payment->reference);
+                        $this->payment->status = $response['status'];
+                        $this->payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
 
-                    $this->payment->save();
-                    dd('TEf');
+                        if ($this->payment->save() && $this->payment->status == "approved"){
+                            $this->payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+
+                            //"CRIAR FUNÇÃO PARA TRATAR OS DADOS DO CUPOM"
+                            $this->payment->receipt = [
+                                'card_number' => null,
+                                'flag' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->bandeira,
+                                'card_ent_mode' => null,//approximation or password
+                                'payer' => null,
+                                'transaction_code' => null,
+                                'receipt' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente
+                            ];
+                        }
+
+                        $this->payment->save();
+                        $this->proccessBillets();
+                        dd('TEf');
+                    }
                     break;
                 }
                 case "ecommerce":
                 {
-                    $response = CieloClient::getStatus($this->payment->transaction);
-                    $this->payment->status = $response['status'];
-
                     $ecommercePayment = null;
 
-                    if(Str::contains($this->payment->payment_type,["credit", "debit"]))
+                    if($this->payment->status == 'approved')
+//                    if(Str::contains($this->payment->status, ['approved', 'canceled','chargeback']))
                     {
-                        if ($this->payment->save() && $this->payment->status == "approved"){
-                            $this->payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
-                            $this->payment->receipt = null;
+//                        $this->proccessBillets();
+                        foreach ($this->payment->billets as $billet) {
+                            //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
+//                ProcessBillets::dispatch((array)$billet, $action, "893");
+//                ProcessBillets::dispatch((array)$billet, $action, $this->payment->id);
+                            ProcessBillets::dispatch((array)$billet, true);
                         }
                     }
+                    else
+                    {
+                        $response = CieloClient::getStatus($this->payment->transaction);
+                        $this->payment->status = $response['status'];
 
-                    $this->payment->save();
-                    dd('ecommerce', $this->payment->payment_type, $this->payment->status);
+                        if(Str::contains($this->payment->payment_type,["credit", "debit"]))
+                        {
+                            if ($this->payment->save() && $this->payment->status == "approved")
+                            {
+                                $this->payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                $this->payment->receipt = [
+                                    'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
+                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
+                                    'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
+                                    'payer' => $ecommercePayment->Payment->CreditCard->Holder,
+                                    'in_installments' => $ecommercePayment->Payment->Installments,
+                                    'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                    'receipt' => null
+                                ];
+                            }
+                        }
 
-//                    switch($this->payment->payment_type) {
-//                        case 'debit':
-//                        case 'credit': {
-//
-//                            break;
-//                        }
-//
-//                        case 'pix': {
-//                            if ($this->payment->save() && $this->payment->status == "approved"){
-//                                //$ecommercePayment->Payment->AuthorizationCode;
-//                                $this->payment->save();
-//
-//                            }
-//                            break;
-//                        }
-//                    }
-
+                        $this->payment->save();
+//                        $this->proccessBillets();
+                        $this->proccessBillets();
+                    }
                     break;
                 }
                 case "picpay": {
-                    $this->payment->status = (new PicpayClient($this->payment))->getStatus()->status;
-                    dd('picpay', $this->payment->status);
+                    if(Str::contains($this->payment->status, ['approved', 'canceled','chargeback']))
+                    {
+                        $this->proccessBillets();
+                    }
+                    else
+                    {
+                        $this->payment->status = (new PicpayClient($this->payment))->getStatus()->status;
+                        $this->payment->save();
+
+                        if(Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])){
+                            $this->proccessBillets();
+                        }
+                        dd('picpay', $this->payment->status);
+                    }
                     break;
                 }
                 default: {
@@ -139,9 +167,10 @@ class ProcessCallback implements ShouldQueue
 //                    break;
 //            }
 
-            if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])){
-                $this->proccessBillets();
-            }
+//            if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])){
+//                $this->proccessBillets();
+////                $this->proccessBillets();
+//            }
         }catch (Exception $ex){
             //Armazenar estes erros no banco de dados
             Log::alert("Erro ao efetuar o Callback do pagamento com o ID: #{$this->payment->id}");
@@ -150,6 +179,7 @@ class ProcessCallback implements ShouldQueue
     }
 
     private function proccessBillets(){
+//        dd('Status process: '.$this->payment->status);
         if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
             $action = ($this->payment->status === "approved") ? true : false;
 //            (new VigoClient())->unlockAccount($action);
