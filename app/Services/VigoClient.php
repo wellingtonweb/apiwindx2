@@ -216,24 +216,15 @@ class VigoClient
     }
 
 //    public function checkoutBillet($billet, $payment_type)
-    public function checkoutBillet($billet)
+    public function checkoutBillet($billet, $place)
     {
         $billet = (object)$billet;
-//        $caixa = "";
 
-//        switch ($payment_type)
-//        {
-//            case 'credit':
-//            case 'debit':
-//                $caixa = '37';
-//                break;
-//            case 'pix':
-//                $caixa = '39';
-//                break;
-//            case null:
-//                $caixa = '38';
-//                break;
-//        }
+        if($place === "central"){
+            $caixa = '37';
+        }else{
+            $caixa = '38';
+        }
 
         $response = Http::accept('application/json')
             ->withToken($this->token)
@@ -241,7 +232,7 @@ class VigoClient
                 "id_boleto" => "{$billet->billet_id}",
 //                "id_caixa" => "37",//oficial
 //                "id_caixa" => "39",//sandbox
-                "id_caixa" => "{$this->caixa}",
+                "id_caixa" => "{$caixa}",
                 "valor_pago" => "{$billet->total}"
             ]);
 

@@ -51,13 +51,6 @@ class ProcessCallback implements ShouldQueue
                 chargeback
         */
 
-//        foreach ($this->payment->billets as $billet) {
-//            //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
-////                ProcessBillets::dispatch((array)$billet, $action, "893");
-////                ProcessBillets::dispatch((array)$billet, $action, $this->payment->id);
-//            ProcessBillets::dispatch((array)$billet, true);
-//        }
-
         try{
             switch ($this->payment->method) {
                 case "tef":
@@ -96,18 +89,9 @@ class ProcessCallback implements ShouldQueue
                 {
                     $ecommercePayment = null;
 
-//                    if($this->payment->status == 'approved')
                     if(Str::contains($this->payment->status, ['approved', 'canceled','chargeback']))
                     {
-
-
                         self::proccessBillets();
-//                        foreach ($this->payment->billets as $billet) {
-//                            //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
-////                ProcessBillets::dispatch((array)$billet, $action, "893");
-////                ProcessBillets::dispatch((array)$billet, $action, $this->payment->id);
-////                            ProcessBillets::dispatch((array)$billet, true);
-//                        }
                     }
                     else
                     {
@@ -132,7 +116,6 @@ class ProcessCallback implements ShouldQueue
                         }
 
                         $this->payment->save();
-//                        $this->proccessBillets();
                         self::proccessBillets();
                     }
                     break;
@@ -190,13 +173,14 @@ class ProcessCallback implements ShouldQueue
 //        dd('Status process: '.$this->payment->status);
         if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
             $action = ($this->payment->status === "approved") ? true : false;
+            $place = ($this->payment->terminal === null) ? "central" : "autoatendimento";
 //            (new VigoClient())->unlockAccount($action);
 
             foreach ($this->payment->billets as $billet) {
                 //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
 //                ProcessBillets::dispatch((array)$billet, $action, "893");
 //                ProcessBillets::dispatch((array)$billet, $action, $this->payment->id);
-                ProcessBillets::dispatch((array)$billet, $action);
+                ProcessBillets::dispatch((array)$billet, $action, $place);
             }
         }
     }
