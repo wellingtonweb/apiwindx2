@@ -29,16 +29,18 @@ class VigoClient
     public function __construct()
     {
         if (getenv('APP_ENV') == 'local') {
-            $this->apiUrl = getenv('VIGO_SANDBOX_APIURL');
+            $this->apiUrl = getenv('VIGO_SANDBOX_API_URL');
             $this->login = getenv('VIGO_SANDBOX_LOGIN');
             $this->password = getenv('VIGO_SANDBOX_PASSWORD');
             $this->caixa = getenv('VIGO_SANDBOX_CAIXA');
         } else {
-            $this->apiUrl = getenv('VIGO_PROD_APIURL');
+            $this->apiUrl = getenv('VIGO_PROD_API_URL');
             $this->login = getenv('VIGO_PROD_LOGIN');
             $this->password = getenv('VIGO_PROD_PASSWORD');
             $this->caixa = getenv('VIGO_PROD_CAIXA_CARTAO');
         }
+
+//        dd($this->apiUrl, $this->login, $this->password, $this->caixa);
 
         $this->customer = [];
         $this->login();
@@ -186,8 +188,6 @@ class VigoClient
         if ($response->successful()) {
             $customers = $response->object();
 
-            dd($customers);
-
             $this->customer = (object)[
                 "id" => $customers->id,
                 "full_name" => $customers->nome,
@@ -239,12 +239,11 @@ class VigoClient
             ->withToken($this->token)
             ->post($this->apiUrl . "/api/app_liquidaboleto", [
                 "id_boleto" => "{$billet->billet_id}",
-                "id_caixa" => "37",
-//                "id_caixa" => "{$this->caixa}",
+//                "id_caixa" => "37",//oficial
+//                "id_caixa" => "39",//sandbox
+                "id_caixa" => "{$this->caixa}",
                 "valor_pago" => "{$billet->total}"
             ]);
-
-        dd($response->object());
 
         if ($response->successful()) {
 

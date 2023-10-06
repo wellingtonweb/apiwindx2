@@ -34,7 +34,6 @@ class ProcessBillets implements ShouldQueue
         $this->vigoClient = new VigoClient();
 //        $this->payment = $payment;
 
-
     }
 
     /**

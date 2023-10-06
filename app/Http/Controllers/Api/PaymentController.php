@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\Functions;
 use App\Helpers\Payments;
+use App\Jobs\ProcessBillets;
 use App\Jobs\ProcessCallback;
 use App\Jobs\ProcessRevertPayment;
 use App\Models\Payment;
@@ -75,7 +76,7 @@ class PaymentController extends Controller
                             $ecommercePayment = $cieloPayment->credit();
 
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
-//                            dd($payment->status, $ecommercePayment);
+//                            dd($payment, $ecommercePayment);
 
                             if ($payment->save() && $payment->status == "approved"){
                                 $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
@@ -90,7 +91,13 @@ class PaymentController extends Controller
                                     'receipt' => null
                                 ];
                                 $payment->save();
-//                                dd('ProcessCallback dispatch - credit '.$payment->status);
+//
+//                                foreach ($payment->billets as $billet) {
+//                                    ProcessBillets::dispatch((array)$billet, true);
+//                                }
+
+//                                dd('ProcessCallback dispatch - credit ',$payment);
+
                                 ProcessCallback::dispatch($payment);
 //                                Payments::proccessingBillets($payment);
                             }else{
