@@ -83,11 +83,11 @@ class PaymentController extends Controller
                                 $payment->installment = $ecommercePayment->Payment->Installments;
                                 $payment->receipt = [
                                     'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
-                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
-                                    'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
                                     'payer' => $ecommercePayment->Payment->CreditCard->Holder,
-                                    'in_installments' => $ecommercePayment->Payment->Installments,
+                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
                                     'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                    'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
+                                    'in_installments' => $ecommercePayment->Payment->Installments,
                                     'receipt' => null
                                 ];
                                 $payment->save();
@@ -96,7 +96,7 @@ class PaymentController extends Controller
 //                                    ProcessBillets::dispatch((array)$billet, true);
 //                                }
 
-//                                dd('ProcessCallback dispatch - credit ',$payment);
+//                                dd('ProcessCallback dispatch - credit ',$payment, (isset($payment->terminal)) ? "autoatendimento" : "central");
 
                                 ProcessCallback::dispatch($payment);
 //                                Payments::proccessingBillets($payment);
@@ -131,6 +131,7 @@ class PaymentController extends Controller
                         }
                         case 'pix': {
                             $ecommercePayment = $cieloPayment->pix();
+//                            dd($ecommercePayment);
                             $payment->transaction = $ecommercePayment->Payment->PaymentId;
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
                             $payment->save();

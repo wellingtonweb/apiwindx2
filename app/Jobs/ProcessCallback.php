@@ -173,7 +173,7 @@ class ProcessCallback implements ShouldQueue
 //        dd('Status process: '.$this->payment->status);
         if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
             $action = ($this->payment->status === "approved") ? true : false;
-            $place = ($this->payment->terminal === null) ? "central" : "autoatendimento";
+            $place = (isset($this->payment->terminal)) ? "autoatendimento" : "central";
 //            (new VigoClient())->unlockAccount($action);
 
             foreach ($this->payment->billets as $billet) {

@@ -220,11 +220,7 @@ class VigoClient
     {
         $billet = (object)$billet;
 
-        if($place === "central"){
-            $caixa = '37';
-        }else{
-            $caixa = '38';
-        }
+        $caixa = self::getCaixa($billet->company_id, $place);
 
         $response = Http::accept('application/json')
             ->withToken($this->token)
@@ -237,7 +233,6 @@ class VigoClient
             ]);
 
         if ($response->successful()) {
-
             return $response->object();
         } else {
             return $response->throw();
@@ -406,6 +401,29 @@ class VigoClient
         } else {
             return $response->throw();
         }
+    }
+
+    public function getCaixa($company_id, $place)
+    {
+        switch($company_id) {
+            case 1:{
+                //Penha
+                $caixa = ($place === "autoatendimento") ? '37' : '38';
+                break;
+            }
+            case 5:{
+                //JDS
+                $caixa = ($place === "autoatendimento") ? '37' : '38';
+                break;
+            }
+            case 6:{
+                //Antonio
+                $caixa = ($place === "autoatendimento") ? '37' : '38';
+                break;
+            }
+        }
+
+        return $caixa;
     }
 
 }

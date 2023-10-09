@@ -108,15 +108,11 @@ class CieloClient
             ],
         ]);
 
-//        if($response->successful()){
-//            $paymentUpdate = Payment::find($payment->id);
-//            $paymentUpdate->token = $response->object()->intencaoVenda->token;
-//            $paymentUpdate->save();
-
+        if($response->successful()){
             return $response->object();
-//        }else{
-//            return $response->toException();
-//        }
+        }else{
+            return $response->toException();
+        }
 
     }
 
