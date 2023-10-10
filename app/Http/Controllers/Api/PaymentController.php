@@ -95,8 +95,7 @@ class PaymentController extends Controller
 //                                foreach ($payment->billets as $billet) {
 //                                    ProcessBillets::dispatch((array)$billet, true);
 //                                }
-
-//                                dd('ProcessCallback dispatch - credit ',$payment, (isset($payment->terminal)) ? "autoatendimento" : "central");
+//                                dd('ProcessCallback dispatch - credit ',(array)$payment);
 
                                 ProcessCallback::dispatch($payment);
 //                                Payments::proccessingBillets($payment);

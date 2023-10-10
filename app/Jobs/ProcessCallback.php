@@ -174,13 +174,19 @@ class ProcessCallback implements ShouldQueue
         if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
             $action = ($this->payment->status === "approved") ? true : false;
             $place = (isset($this->payment->terminal)) ? "autoatendimento" : "central";
+            $paymentDataSlim = [
+                'customerId' => $this->payment->customer,
+                'reference' => $this->payment->reference,
+                'method' => $this->payment->method,
+                'payment_type' => $this->payment->payment_type,
+            ];
 //            (new VigoClient())->unlockAccount($action);
 
             foreach ($this->payment->billets as $billet) {
                 //Informar o caixa aqui caso a baixa seja realmente separada por modalidade
 //                ProcessBillets::dispatch((array)$billet, $action, "893");
 //                ProcessBillets::dispatch((array)$billet, $action, $this->payment->id);
-                ProcessBillets::dispatch((array)$billet, $action, $place);
+                ProcessBillets::dispatch((array)$billet, $action, $place, $paymentDataSlim);
             }
         }
     }
