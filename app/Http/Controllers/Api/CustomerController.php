@@ -59,6 +59,17 @@ class CustomerController extends Controller
         }
     }
 
+    public function calls($customer)
+    {
+        $response =  $this->vigoClient->getCalls($customer);
+
+        if(!empty($response)){
+            return response()->json($response);
+        }else{
+            return response()->json(false);
+        }
+    }
+
     /**
      * @param  $customer_id
      * @return PaymentCollection
@@ -72,14 +83,19 @@ class CustomerController extends Controller
 
     public function release(Request $request)
     {
-
-//        $data = (array)$request->all();
-//        return response()->json($request);
-
         $response =  $this->vigoClient->releaseCustomerById($request);
-//        return response()->json($response);
-////        dd($response);
-//
+
+        if(!empty($response)){
+            return response()->json($response);
+        }else{
+            return response()->json(false);
+        }
+    }
+
+    public function callNew(Request $request)
+    {
+        $response =  $this->vigoClient->callInsert($request);
+
         if(!empty($response)){
             return response()->json($response);
         }else{

@@ -205,17 +205,14 @@ class VigoClient
                 "status" => $customers->situacao,
                 "dt_trust" => $customers->dt_confianca,
                 "company_id" => $customers->idempresa,
-                "account_plan" => $customers->plano_conta,
+                "plans" => $this->getPlans($customers->id),
+                "invoices" => $this->getInvoices($customers->id, $customers->cpfcgc),
                 "billets" => $this->getBillets($customers->id)
             ];
-
-//            dd($this->customer);
-//            $this->unlockAccount();
         }
         return $this;
     }
 
-//    public function checkoutBillet($billet, $payment_type)
     public function checkoutBillet($billet, $place)
     {
         $billet = (object)$billet;
@@ -255,29 +252,71 @@ class VigoClient
             return $response->throw();
         }
     }
-    /*public function reverseBillet($billet)
+
+    public function search(int $idCustomer)
     {
-        $billet = (object)$billet;
-        $response = Http::accept('application/json')->withToken($this->token)
-            ->post($this->apiUrl . "/api/app_estornaboleto", [
-                "id_boleto" => "{$billet->billet_id}",
-                "id_caixa" => "{$this->caixa}",
+        return [
+            "customer" => $this->getCustomer($idCustomer),
+            "billets" => json_decode($this->getBillets($idCustomer))
+        ];
+    }
+
+    public function getPlans(int $idCustomer)
+    {
+        $response = Http::accept('application/json')
+            ->withToken($this->token)
+            ->post($this->apiUrl . "/api/app_getplanosid", [
+                "id" => "{$idCustomer}",
+            ]);
+
+        return json_decode($response->object());
+    }
+
+    public function getInvoices(int $idCustomer, string $document)
+    {
+        $response = Http::accept('application/json')
+            ->withToken($this->token)
+            ->post($this->apiUrl . "/api/app_getnotas", [
+                "cpf_cnpj" => "{$document}",
+                "id" => "{$idCustomer}",
+            ]);
+
+        /*usort($response, function ($a, $b) {
+            return strtotime($a->emissao) - strtotime($b->emissao);
+        });*/
+
+        return json_decode($response->object());
+    }
+
+    public function getCalls(int $idCustomer)
+    {
+        $response = Http::accept('application/json')
+            ->withToken($this->token)
+            ->post($this->apiUrl . "/api/app_getatendimentosid", [
+                "id" => "{$idCustomer}",
+            ]);
+
+        /*usort($response, function ($a, $b) {
+            return strtotime($a->emissao) - strtotime($b->emissao);
+        });*/
+
+        return json_decode($response->object());
+    }
+
+    public function callInsert($call)
+    {
+        $response = Http::accept('application/json')
+            ->withToken($this->token)
+            ->post($this->apiUrl . "/api/app_insert", [
+                "id_atendimento" => "0",
+                "id_funcionario" => "{$call->customer_id}",
+                "texto" => "{$call->texto}"
             ]);
         if ($response->successful()) {
             return $response->object();
         } else {
             return $response->throw();
         }
-
-    }*/
-
-    public function search(int $idCustomer)
-    {
-        return [
-            "customer" => $this->getCustomer($idCustomer),
-//            "billets" => $this->getBillets($idCustomer)
-            "billets" => json_decode($this->getBillets($idCustomer))
-        ];
     }
 
 //    public function checkExpiredTickets(int $idCustomer)
@@ -403,20 +442,25 @@ class VigoClient
         }
     }
 
+
+
     public function getCaixa($company_id, $place)
     {
         switch($company_id) {
-            case 1:{
+            case 1:
+            {
                 //Penha
                 $caixa = ($place === "autoatendimento") ? '37' : '38';
                 break;
             }
-            case 5:{
+            case 5:
+            {
                 //JDS
                 $caixa = ($place === "autoatendimento") ? '37' : '38';
                 break;
             }
-            case 6:{
+            case 6:
+            {
                 //Antonio
                 $caixa = ($place === "autoatendimento") ? '37' : '38';
                 break;

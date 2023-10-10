@@ -45,6 +45,8 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::post('/customer/login', [CustomerController::class, "login"]);
     Route::post('/customer/central/login', [CustomerController::class, "loginCentral"]);
     Route::get('/customer/{customer}', [CustomerController::class, "find"]);
+    Route::get('/customer/calls/{customer}', [CustomerController::class, "calls"]);
+    Route::post('/customer/call/new', [CustomerController::class, "callNew"]);
 
     Route::post('/customer/release', [CustomerController::class, "release"]);
 //    Route::get('/customer/{customer}/release', [CustomerController::class, "release"]);
