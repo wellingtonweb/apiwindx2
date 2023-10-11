@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CallbackController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\VigoController;
 use App\Jobs\ProcessBillets;
 use App\Models\Payment;
 use App\Services\VigoClient;
@@ -35,10 +36,13 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::apiResource('payments', PaymentController::class);
     Route::apiResource('terminals', TerminalController::class);
 
+
     // Customer Payments
     Route::get('/customer/{customer}/payments', [CustomerController::class, "payments"]);
 
+
     // Terminal Payments
+    Route::get('/terminals/{terminal}/payments', [TerminalPaymentsController::class, 'index']);
     Route::get('/terminals/{terminal}/payments', [TerminalPaymentsController::class, 'index']);
 
     // Vigo customers
@@ -50,6 +54,12 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
 
     Route::post('/customer/release', [CustomerController::class, "release"]);
 //    Route::get('/customer/{customer}/release', [CustomerController::class, "release"]);
+
+    // Vigo informations old payments
+    Route::get('/old/cielo/payments', [VigoController::class, 'cielo']);
+    Route::get('/old/paygo/payments', [VigoController::class, 'paygo']);
+    Route::get('/old/picpay/payments', [VigoController::class, 'picpay']);
+    Route::get('/old/terminals', [VigoController::class, 'terminals']);
 
 });
 

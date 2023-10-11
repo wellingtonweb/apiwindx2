@@ -37,45 +37,37 @@ class VigoServer
             default: break;
         }
 
-        $auditData = [
+        sleep(60);
+
+        DB::connection('vigo')->table('sistema_auditoria_cliente')
+            ->insert([
             'data'   =>   $this->today->format('Y-m-d'),
             'hora'   =>   $this->today->format('H:i:s'),
             'operador'   =>   'API',
             'acao'   =>   "BOLETO LIQUIDADO: {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount} | CAIXA: {$auditInfo['caixa']}
             | PAG. REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
             'idcliente'   =>   $auditInfo['payment']->customerId,
-        ];
-
-        Log::alert(json_encode($auditData));
-
-//        return $auditData;
-
-        sleep(60);
-
-        DB::connection('vigo')->table('sistema_auditoria_cliente')
-            ->insert($auditData);
+        ]);
     }
 
-    public function getTerminalsOld()
+    public function getPaymentsCieloOld()
     {
-//        $list = $this->vigoDB->select('select * from pagamentos_terminais');
-        $list = DB::connection('vigo')->table('pagamentos_terminais')
-            ->insert([
-//                'id'     =>   21,
-                'nome'   =>   'Terminal API3',
-                'terminalId'   =>   45,
-                'pessoaId'   =>   9935,
-                'key'   =>   'oaisdhasdhkjahsdakjsdkl',
-                'instalacaoId'   =>   '123456',
-                'senha'   =>   'abc123',
-                'remote_access_id'   =>   '1.1.1.1',
-                'data'   =>   $this->today->format('Y-m-d'),
-                'hora'   =>   $this->today->format('H:i:s'),
-            ]);
+        return collect($this->vigoDB->select('select * from pagamentos_cielo'));
+    }
 
-        return $list;
+    public function getPaymentsPaygoOld()
+    {
+        return collect($this->vigoDB->select('select * from pagamentos_paygo'));
+    }
 
-//        table('pagamentos_terminais')->where('type', 'Programs')->get();
+    public function getPaymentsPicpayOld()
+    {
+        return collect($this->vigoDB->select('select * from pagamentos_picpay'));
+    }
+
+    public function getPaymentsTerminalsOld()
+    {
+        return collect($this->vigoDB->select('select * from pagamentos_terminais'));
     }
 
 }
