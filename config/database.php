@@ -92,7 +92,7 @@ return [
         ],
 
         'vigo' => [
-            'driver' => 'mysqli',
+            'driver' => 'mysql',
             'url' => env('VIGO_DATABASE_URL'),
             'host' => env('VIGO_DB_HOST', '127.0.0.1'),
             'port' => env('VIGO_DB_PORT', '3306'),

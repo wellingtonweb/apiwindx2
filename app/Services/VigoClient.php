@@ -6,9 +6,10 @@ use App\Models\Payment;
 use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\VigoServer;
 
 class VigoClient
 {
@@ -486,9 +487,6 @@ class VigoClient
         return $caixa;
     }
 
-    public function connectDBVigo()
-    {
-        //
-    }
+
 
 }

@@ -11,6 +11,8 @@ use App\Models\Payment;
 use App\Services\CieloClient;
 use App\Services\PaygoClient;
 use App\Services\PicpayClient;
+use App\Services\VigoClient;
+use App\Services\VigoServer;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
@@ -73,6 +75,8 @@ class PaymentController extends Controller
 
                     switch($payment->payment_type) {
                         case 'credit': {
+                            dd((new VigoServer())->setAuditPayment());
+
                             $ecommercePayment = $cieloPayment->credit();
 
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
