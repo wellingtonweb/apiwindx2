@@ -221,7 +221,7 @@ class VigoClient
         $caixa = self::getCaixa($billet->company_id, $place);
         $payment_type = ($payment->payment_type === null) ? "picpay" : $payment->payment_type;
 
-        $textPayment = "Boleto ID {$billet->billet_id}, liquidado com valor R$ {$billet->total} no caixa nº {$caixa}.
+        $textPayment = "Boleto {$billet->billet_id}/{$billet->reference}, liquidado com valor R$ {$billet->total} no caixa nº {$caixa}.
         Pagamento referente {$payment->reference}, usando o método ".strtoupper($payment_type)." via ".strtoupper($place).".";
 
 //        $response = Http::accept('application/json')
@@ -484,6 +484,11 @@ class VigoClient
         }
 
         return $caixa;
+    }
+
+    public function connectDBVigo()
+    {
+        //
     }
 
 }
