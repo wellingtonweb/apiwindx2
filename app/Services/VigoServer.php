@@ -24,7 +24,7 @@ class VigoServer
         $this->today = Carbon::now('America/Sao_Paulo');
     }
 
-    public function setAuditPayment($auditInfo)
+    public function setAuditPayment($auditInfo, $status)
     {
         $payment_typeUpdated = "";
         $amount = str_replace('.',',', $auditInfo['billet']->total);
@@ -39,15 +39,28 @@ class VigoServer
 
         sleep(60);
 
-        DB::connection('vigo')->table('sistema_auditoria_cliente')
-            ->insert([
-            'data'   =>   $this->today->format('Y-m-d'),
-            'hora'   =>   $this->today->format('H:i:s'),
-            'operador'   =>   'API',
-            'acao'   =>   "BOLETO LIQUIDADO: {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount} | CAIXA: {$auditInfo['caixa']}
+        if($status === 200){
+            DB::connection('vigo')->table('sistema_auditoria_cliente')
+                ->insert([
+                    'data'   =>   $this->today->format('Y-m-d'),
+                    'hora'   =>   $this->today->format('H:i:s'),
+                    'operador'   =>   'API',
+                    'acao'   =>   "BOLETO LIQUIDADO: {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount} | CAIXA: {$auditInfo['caixa']}
             | PAG. REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
-            'idcliente'   =>   $auditInfo['payment']->customerId,
-        ]);
+                    'idcliente'   =>   $auditInfo['payment']->customerId,
+            ]);
+        }else{
+            DB::connection('vigo')->table('sistema_auditoria_cliente')
+                ->insert([
+                    'data'   =>   $this->today->format('Y-m-d'),
+                    'hora'   =>   $this->today->format('H:i:s'),
+                    'operador'   =>   'API',
+                    'acao'   =>   "PAGAMENTO DUPLICADO DO BOLETO : {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount}
+            | PAG. REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
+                    'idcliente'   =>   $auditInfo['payment']->customerId,
+                ]);
+        }
+
     }
 
     public function getPaymentsCieloOld()

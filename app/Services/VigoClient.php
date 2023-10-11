@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Services\VigoServer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Services\VigoServer;
 
 class VigoClient
 {
@@ -238,12 +238,16 @@ class VigoClient
                 "valor_pago" => "{$billet->total}"
             ]);
 
-        if ($response->successful()) {
-//            Log::alert(json_encode($auditInfo));
-            (new VigoServer())->setAuditPayment($auditInfo);
+        if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
+        {
+            Log::alert(json_encode($response->status() . ' - '. $response->object()));
+            (new VigoServer())->setAuditPayment($auditInfo, 200);
 
             return $response->object();
         } else {
+            Log::alert('Erro: Boleto nº '. $billet->billet_id. ' já foi liquidado!');
+            (new VigoServer())->setAuditPayment($auditInfo, 404);
+
             return $response->throw();
         }
     }
@@ -402,9 +406,6 @@ class VigoClient
         }
     }
 
-
-
-//    public function serviceStore()
     public function serviceStore(int $payment_id)
     {
 
@@ -454,8 +455,6 @@ class VigoClient
         }
     }
 
-
-
     public function getCaixa($company_id, $place)
     {
         switch($company_id) {
@@ -482,6 +481,35 @@ class VigoClient
         return $caixa;
     }
 
+    public function billetIsPay($customerId, $billetIdCheck)
+    {
+        $resp = [
+            'status' => false,
+            'billets' => []
+        ];
+
+        $response = json_decode(Http::accept('application/json')
+            ->withToken($this->token)
+            ->post("{$this->apiUrl}/api/app_getboletosid", [
+                'id' => "{$customerId}"
+            ])->body());
+        $response = json_decode($response);
+
+//        usort($response, function ($a, $b) {
+//            return strtotime($a->Vencimento) - strtotime($b->Vencimento);
+//        });
+
+        foreach ($response as $key => $billet) {
+            if($billetIdCheck == $billet->Id){
+                if ($billet->Pago != 0) {
+                    $resp['status'] = true;
+                    array_push($resp['billets'], $billet->Id);
+                }
+            }
+        }
+
+        return $resp;
+    }
 
 
 }

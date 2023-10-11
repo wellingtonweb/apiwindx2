@@ -54,108 +54,125 @@ class PaymentController extends Controller
         $validated = $request->validated();
 
 //        dd($validated);
+        $billetIsPay = null;
 
         $validated['amount'] = 0;
         foreach ($validated['billets'] as $billet) {
             $billet->total = (($billet->value + $billet->addition) - $billet->discount);
             $validated['amount'] = $validated['amount'] + $billet->total;
             $validated['reference'] = (Str::uuid())->toString();
+            $billetIsPay = (new VigoClient())->billetIsPay($validated['customer'], $billet->billet_id);
         }
 
-        $payment = (Payment::create($validated))->load('terminal');
+//                dd($billetIsPay);
 
-        if ($payment) {
-            switch ($payment->method) {
-                case "tef": {
-                    $response = (new PaygoClient())->pay($payment);
+        if($billetIsPay['status'] === false){
+            $payment = (Payment::create($validated))->load('terminal');
+
+            if ($payment) {
+                switch ($payment->method) {
+                    case "tef": {
+                        $response = (new PaygoClient())->pay($payment);
 //                    dd($response);
-                    break;
-                }
-                case "ecommerce": {
-                    $cieloPayment = (new CieloClient($payment, $validated));
-                    $ecommercePayment = null;
+                        break;
+                    }
+                    case "ecommerce": {
+                        $cieloPayment = (new CieloClient($payment, $validated));
+                        $ecommercePayment = null;
 
-                    switch($payment->payment_type) {
-                        case 'credit': {
-                            $ecommercePayment = $cieloPayment->credit();
+                        switch($payment->payment_type) {
+                            case 'credit': {
+                                $ecommercePayment = $cieloPayment->credit();
 //                            dd($ecommercePayment);
 
-                            $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+                                $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
 //                            dd($payment, $ecommercePayment);
 
-                            if ($payment->save() && $payment->status == "approved"){
-                                $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
-                                $payment->installment = $ecommercePayment->Payment->Installments;
-                                $payment->receipt = [
-                                    'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
-                                    'payer' => $ecommercePayment->Payment->CreditCard->Holder,
-                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
-                                    'transaction_code' => $ecommercePayment->Payment->PaymentId,
-                                    'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
-                                    'in_installments' => $ecommercePayment->Payment->Installments,
-                                    'receipt' => null
-                                ];
-                                $payment->save();
+                                if ($payment->save() && $payment->status == "approved"){
+                                    $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                    $payment->installment = $ecommercePayment->Payment->Installments;
+                                    $payment->receipt = [
+                                        'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
+                                        'payer' => $ecommercePayment->Payment->CreditCard->Holder,
+                                        'flag' => $ecommercePayment->Payment->CreditCard->Brand,
+                                        'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                        'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
+                                        'in_installments' => $ecommercePayment->Payment->Installments,
+                                        'receipt' => null
+                                    ];
+                                    $payment->save();
 //
 //                                foreach ($payment->billets as $billet) {
 //                                    ProcessBillets::dispatch((array)$billet, true);
 //                                }
 //                                dd('ProcessCallback dispatch - credit ',(array)$payment);
 
-                                ProcessCallback::dispatch($payment);
+                                    ProcessCallback::dispatch($payment);
 //                                Payments::proccessingBillets($payment);
-                            }else{
-                                $payment->installment = $ecommercePayment->Payment->Installments;
-                                $payment->save();
-                                ProcessCallback::dispatch($payment);
+                                }else{
+                                    $payment->installment = $ecommercePayment->Payment->Installments;
+                                    $payment->save();
+                                    ProcessCallback::dispatch($payment);
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        case 'debit': {
-                            $ecommercePayment = $cieloPayment->debit();
-                            $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+                            case 'debit': {
+                                $ecommercePayment = $cieloPayment->debit();
+                                $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
 
-                            if ($payment->save() && $payment->status == "approved"){
-                                $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
-                                $payment->receipt = [
-                                    'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
-                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
-                                    'approximation' => null,
-                                    'with_password' => "TRANSACAO AUTORIZADA COM SENHA",
-                                    'payer' => $ecommercePayment->Payment->CreditCard->Holder,
-                                    'in_installments' => null,
-                                    'transaction_code' => $ecommercePayment->Payment->PaymentId,
-                                    'receipt' => null
-                                ];
-                                $payment->save();
-                                dd('ProcessCallback dispatch - debit', $payment, $ecommercePayment);
-                                ProcessCallback::dispatch($payment);
+                                if ($payment->save() && $payment->status == "approved"){
+                                    $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                    $payment->receipt = [
+                                        'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
+                                        'flag' => $ecommercePayment->Payment->CreditCard->Brand,
+                                        'approximation' => null,
+                                        'with_password' => "TRANSACAO AUTORIZADA COM SENHA",
+                                        'payer' => $ecommercePayment->Payment->CreditCard->Holder,
+                                        'in_installments' => null,
+                                        'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                        'receipt' => null
+                                    ];
+                                    $payment->save();
+                                    dd('ProcessCallback dispatch - debit', $payment, $ecommercePayment);
+                                    ProcessCallback::dispatch($payment);
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        case 'pix': {
-                            $ecommercePayment = $cieloPayment->pix();
+                            case 'pix': {
+                                $ecommercePayment = $cieloPayment->pix();
 //                            dd($ecommercePayment);
-                            $payment->transaction = $ecommercePayment->Payment->PaymentId;
-                            $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
-                            $payment->save();
+                                $payment->transaction = $ecommercePayment->Payment->PaymentId;
+                                $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+                                $payment->save();
 
-                            $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
-                            $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
-                            $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
-                            break;
+                                $payment->qrCode = $ecommercePayment->Payment->QrCodeBase64Image;
+                                $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
+                                $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
+                                break;
+                            }
                         }
-                    }
 
-                    break;
-                }
-                case "picpay": {
-                    $buyer = (object)$validated['buyer'];
-                    $response = (new PicpayClient($payment))->pay($buyer);
-                    $payment->qrCode = $response->qrcode->base64;
-                    break;
+                        break;
+                    }
+                    case "picpay": {
+                        $buyer = (object)$validated['buyer'];
+                        $response = (new PicpayClient($payment))->pay($buyer);
+                        $payment->qrCode = $response->qrcode->base64;
+                        break;
+                    }
                 }
             }
+        }else{
+            if(count($billetIsPay['billets']) > 1){
+                $message = "As faturas IDs ".json_encode($billetIsPay['billets']).", já foram pagas!";
+            }else{
+                $message = "A fatura ID ".json_encode($billetIsPay['billets']).", já foi paga!";
+            }
+
+            $payment = [
+                'status' => 404,
+                'message' => $message
+            ];
         }
 
         return new PaymentResource($payment);
