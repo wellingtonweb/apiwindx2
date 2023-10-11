@@ -53,6 +53,8 @@ class PaymentController extends Controller
 
         $validated = $request->validated();
 
+//        dd($validated);
+
         $validated['amount'] = 0;
         foreach ($validated['billets'] as $billet) {
             $billet->total = (($billet->value + $billet->addition) - $billet->discount);
@@ -75,9 +77,8 @@ class PaymentController extends Controller
 
                     switch($payment->payment_type) {
                         case 'credit': {
-                            dd((new VigoServer())->setAuditPayment());
-
                             $ecommercePayment = $cieloPayment->credit();
+//                            dd($ecommercePayment);
 
                             $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
 //                            dd($payment, $ecommercePayment);

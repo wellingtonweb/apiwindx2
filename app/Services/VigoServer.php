@@ -24,21 +24,36 @@ class VigoServer
         $this->today = Carbon::now('America/Sao_Paulo');
     }
 
-    public function setAuditPayment()
+    public function setAuditPayment($auditInfo)
     {
-        $data = [
+        $payment_typeUpdated = "";
+        $amount = str_replace('.',',', $auditInfo['billet']->total);
+
+        switch ($auditInfo['payment']->payment_type){
+            case 'credit': $payment_typeUpdated = "CRÉDITO"; break;
+            case 'debit': $payment_typeUpdated = "DÉBITO"; break;
+            case 'pix': $payment_typeUpdated = "PIX"; break;
+            case null: $payment_typeUpdated = "PICPAY"; break;
+            default: break;
+        }
+
+        $auditData = [
             'data'   =>   $this->today->format('Y-m-d'),
             'hora'   =>   $this->today->format('H:i:s'),
             'operador'   =>   'API',
-            'acao'   =>   "Boleto {$billet->billet_id}/{$billet->reference}, liquidado com valor R$ {$billet->total} no caixa nº {$caixa}.
-        Pagamento referente {$payment->reference}, usando o método ".strtoupper($payment_type)." via ".strtoupper($place).".",
-            'idcliente'   =>   '34258',
+            'acao'   =>   "BOLETO LIQUIDADO: {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount} | CAIXA: {$auditInfo['caixa']}
+            | PAG. REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
+            'idcliente'   =>   $auditInfo['payment']->customerId,
         ];
 
-        return $data;
+        Log::alert(json_encode($auditData));
 
-//        DB::connection('vigo')->table('sistema_auditoria_cliente')
-//            ->insert($data);
+//        return $auditData;
+
+        sleep(60);
+
+        DB::connection('vigo')->table('sistema_auditoria_cliente')
+            ->insert($auditData);
     }
 
     public function getTerminalsOld()

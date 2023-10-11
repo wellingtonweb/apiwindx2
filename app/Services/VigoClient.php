@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Payment;
-use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -214,43 +213,39 @@ class VigoClient
         return $this;
     }
 
-    public function checkoutBillet($billet, $place, $payment)
+    public function checkoutBillet($billet, $payment)
     {
         $billet = (object)$billet;
         $payment = (object)$payment;
+        $caixa = self::getCaixa($billet->company_id, $payment->place);
 
-        $caixa = self::getCaixa($billet->company_id, $place);
-        $payment_type = ($payment->payment_type === null) ? "picpay" : $payment->payment_type;
+        $auditInfo = [
+            'payment' => $payment,
+            'billet' => $billet,
+            'caixa' => $caixa,
+        ];
 
-        $textPayment = "Boleto {$billet->billet_id}/{$billet->reference}, liquidado com valor R$ {$billet->total} no caixa nº {$caixa}.
-        Pagamento referente {$payment->reference}, usando o método ".strtoupper($payment_type)." via ".strtoupper($place).".";
+//        $textPayment = "Boleto {$billet->billet_id}/{$billet->reference}, liquidado com valor R$ {$billet->total} no caixa nº {$caixa}.
+//        Pagamento referente {$payment->reference}, usando o método ".strtoupper($payment_type)." via ".strtoupper($place).".";
 
-//        $response = Http::accept('application/json')
-//            ->withToken($this->token)
-//            ->post($this->apiUrl . "/api/app_liquidaboleto", [
-//                "id_boleto" => "{$billet->billet_id}",
-////                "id_caixa" => "37",//oficial
-////                "id_caixa" => "39",//sandbox
-//                "id_caixa" => "{$caixa}",
-//                "valor_pago" => "{$billet->total}"
-//            ]);
+        $response = Http::accept('application/json')
+            ->withToken($this->token)
+            ->post($this->apiUrl . "/api/app_liquidaboleto", [
+                "id_boleto" => "{$billet->billet_id}",
+//                "id_caixa" => "37",//oficial
+//                "id_caixa" => "39",//sandbox
+                "id_caixa" => "{$caixa}",
+                "valor_pago" => "{$billet->total}"
+            ]);
 
+        if ($response->successful()) {
+//            Log::alert(json_encode($auditInfo));
+            (new VigoServer())->setAuditPayment($auditInfo);
 
-
-//        if ($response->successful()) {
-//            $call = (object)[
-//                'customer_id' => "{$payment->customerId}",//ID do cliente
-////                'customer_id' => "{$payment->customer}",//ID do cliente
-//                'texto' => $textPayment//texto do atendimento
-//            ];
-
-            Log::alert($textPayment);
-//            self::callInsert($call);
-//
-//            return $response->object();
-//        } else {
-//            return $response->throw();
-//        }
+            return $response->object();
+        } else {
+            return $response->throw();
+        }
     }
 
 //    public function reverseBillet($billet, $payment_type)

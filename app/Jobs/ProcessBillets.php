@@ -28,11 +28,10 @@ class ProcessBillets implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(array $billet,$action, $place, array $payment)
+    public function __construct(array $billet,$action, array $payment)
     {
         $this->billet = $billet;
         $this->action = $action;
-        $this->place = $place;
         $this->payment = $payment;
         $this->vigoClient = new VigoClient();
     }
@@ -46,7 +45,7 @@ class ProcessBillets implements ShouldQueue
     {
         if($this->action){
 //            $this->vigoClient->checkoutBillet($this->billet, $this->paymentType);
-            $this->vigoClient->checkoutBillet($this->billet, $this->place, $this->payment);
+            $this->vigoClient->checkoutBillet($this->billet, $this->payment);
 
 //            $this->vigoClient->serviceStore($this->payment);
 //            $this->vigoClient->serviceStore();

@@ -105,10 +105,13 @@ class CieloClient
                 "Installments" => "{$this->paymentData->installment}",//se for recorrencia = 1
                 "Capture" => true,
                 "InitiatedTransactionIndicator" => $initTransInd
-            ],
+            ]
         ]);
 
+//        dd($response->successful(), $response->object());
+
         if($response->successful()){
+//            dd($response->object());
             return $response->object();
         }else{
             return $response->toException();
