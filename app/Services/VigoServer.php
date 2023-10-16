@@ -63,6 +63,52 @@ class VigoServer
 
     }
 
+    public function setAuditCustomer($customerId, $action)
+    {
+        if($customerId){
+            DB::connection('vigo')->table('sistema_auditoria_cliente')
+                ->insert([
+                    'data'   =>   $this->today->format('Y-m-d'),
+                    'hora'   =>   $this->today->format('H:i:s'),
+                    'operador'   =>   'API',
+                    'acao'   =>   $action,
+                    'idcliente'   =>   $customerId,
+                ]);
+        }
+    }
+
+    public function setNewPasswordCustomer($customerId)
+    {
+        if($customerId){
+            return true;
+
+//            $action = "A senha do usuário foi alterada via Central do Assinante.";
+//            self::setAuditCustomer($customerId, $action);
+
+
+        }
+        return false;
+    }
+
+
+    public function checkLoginCustomer($login)
+    {
+        if($login){
+            $search = $this->vigoDB->select("select * from cadastro_clientes where login = ?",[$login]);
+//            if(!$search){
+//                return false;
+//            }
+
+            return collect($search);
+
+//            $action = "A senha do usuário foi alterada via Central do Assinante.";
+//            self::setAuditCustomer($customerId, $action);
+
+
+        }
+        return false;
+    }
+
     public function getPaymentsCieloOld()
     {
         return collect($this->vigoDB->select('select * from pagamentos_cielo'));

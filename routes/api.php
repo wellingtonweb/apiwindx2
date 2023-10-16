@@ -51,6 +51,8 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::get('/customer/{customer}', [CustomerController::class, "find"]);
     Route::get('/customer/calls/{customer}', [CustomerController::class, "calls"]);
     Route::post('/customer/call/new', [CustomerController::class, "callNew"]);
+    Route::post('/customer/reset-password', [CustomerController::class, "resetPassword"]);
+    Route::post('/customer/check-login-customer', [CustomerController::class, "checkLoginCustomer"]);
 
     Route::post('/customer/release', [CustomerController::class, "release"]);
 //    Route::get('/customer/{customer}/release', [CustomerController::class, "release"]);
