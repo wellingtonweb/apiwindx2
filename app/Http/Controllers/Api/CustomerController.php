@@ -12,6 +12,7 @@ use App\Services\VigoServer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
@@ -106,22 +107,32 @@ class CustomerController extends Controller
 
     public function checkLoginCustomer(Request $request)
     {
-        //Validar dados do request
+        $validator = Validator::make($request->all(), [
+            'login' => 'required|email:rfc,dns',
+        ]);
+
+        if($validator->fails()) {
+            return response()->json(false);
+        }
 
         $response = (new VigoServer())->checkLoginCustomer($request->login);
 
-        if(!empty($response)){
-            return response()->json($response);
-        }else{
-            return response()->json(false);
-        }
+        return $response;
+
+//        if(!empty($response)){
+//            return response()->json($response);
+//        }else{
+//            return response()->json(false);
+//        }
     }
 
     public function resetPassword(Request $request)
     {
-        //Validar dados do request
-
-        $response = (new VigoServer())->setNewPasswordCustomer($request->customer_id, $request->customer_password);
+        $response = (new VigoServer())
+            ->setNewPasswordCustomer([
+                'customer_id' => $request->customer_id,
+                'customer_password' => $request->customer_password
+            ]);
 
         if(!empty($response)){
             return response()->json($response);

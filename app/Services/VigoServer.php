@@ -77,16 +77,26 @@ class VigoServer
         }
     }
 
-    public function setNewPasswordCustomer($customerId)
+    public function setNewPasswordCustomer($customer)
     {
-        if($customerId){
-            return true;
+        if($customer){
 
-//            $action = "A senha do usuário foi alterada via Central do Assinante.";
-//            self::setAuditCustomer($customerId, $action);
+            $affected = $this->vigoDB->table('cadastro_clientes')
+//                ->where('id', $customer['customer_id'])
+                ->where('id', '=',34258)
+                ->update(['senha' => $customer['customer_password']]);
 
+            if(!empty($affected)){
+                $action = "A senha do cliente ID {$customer['customer_id']} foi alterada via Central do Assinante.";
+                self::setAuditCustomer($customer['customer_id'], $action);
 
+//                return collect($action);
+                return true;
+            }
+
+            return false;
         }
+
         return false;
     }
 
@@ -95,10 +105,11 @@ class VigoServer
     {
         if($login){
             $search = $this->vigoDB->select("select * from cadastro_clientes where login = ?",[$login]);
-//            if(!$search){
-//                return false;
-//            }
+            if(empty($search)){
+                return null;
+            }
 
+//            return true;
             return collect($search);
 
 //            $action = "A senha do usuário foi alterada via Central do Assinante.";
@@ -106,7 +117,7 @@ class VigoServer
 
 
         }
-        return false;
+        return null;
     }
 
     public function getPaymentsCieloOld()

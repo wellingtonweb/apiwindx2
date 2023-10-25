@@ -35,6 +35,7 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::get('payments/revert/{payment}', [PaymentController::class, "revertPayment"]);
     Route::apiResource('payments', PaymentController::class);
     Route::apiResource('terminals', TerminalController::class);
+    Route::get('payments/cancel/{payment}', [PaymentController::class, "cancelPayment"]);
 
 
     // Customer Payments
