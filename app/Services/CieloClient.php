@@ -41,30 +41,31 @@ class CieloClient
         $this->paymentData = (object) $paymentData;
     }
 
-    public function enviroment()
+    public function credentials()
     {
-//        if (config('services.app.env') == 'local') {
-//            $ev = [
-//                'merchantId' => config('services.cielo.sandbox.api_merchant_id'),
-//                'merchantKey' => config('services.cielo.sandbox.api_merchant_key'),
-//                'apiUrl' => config('services.cielo.sandbox.api_url'),
-//                'apiQueryUrl' => config('services.cielo.sandbox.api_query_url'),
-//            ] ;
-//        } else {
+        if (getenv('APP_ENV') == 'local') {
+            $ev = [
+                'merchantId' => config('services.cielo.sandbox.api_merchant_id'),
+                'merchantKey' => config('services.cielo.sandbox.api_merchant_key'),
+                'apiUrl' => config('services.cielo.sandbox.api_url'),
+                'apiQueryUrl' => config('services.cielo.sandbox.api_query_url'),
+            ] ;
+        } else {
             $ev = [
                 'merchantId' => config('services.cielo.production.api_merchant_id'),
                 'merchantKey' => config('services.cielo.production.api_merchant_key'),
                 'apiUrl' => config('services.cielo.production.api_url'),
                 'apiQueryUrl' => config('services.cielo.production.api_query_url'),
             ] ;
-//        }
+        }
 
         return $ev;
     }
 
     public function credit()
     {
-        $ev = self::enviroment();
+        $ev = self::credentials();
+//        dd($ev);
 
         $initTransInd = [
             'Category' => null,
@@ -80,7 +81,6 @@ class CieloClient
             }
         }
 
-//        dd($this->order, $this->paymentData);
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
             "MerchantId" => $ev['merchantId'],
@@ -104,24 +104,17 @@ class CieloClient
                 ],
                 "Installments" => "{$this->paymentData->installment}",//se for recorrencia = 1
                 "Capture" => true,
-                "InitiatedTransactionIndicator" => $initTransInd
+//                "InitiatedTransactionIndicator" => $initTransInd
             ]
         ]);
+//        dd($response);
 
-//        dd($response->successful(), $response->object());
-
-        if($response->successful()){
-//            dd($response->object());
-            return $response->object();
-        }else{
-            return $response->toException();
-        }
-
+        return $response;
     }
 
     public function debit()
     {
-        $ev = self::enviroment();
+        $ev = self::credentials();
 
 //        $this->sale->customer($this->paymentData->card['holder_name']);
 //        $this->payment = $this->sale
@@ -142,7 +135,7 @@ class CieloClient
 
     public function pix()
     {
-        $ev = self::enviroment();
+        $ev = self::credentials();
 
 //        dd($ev, $this->paymentData);
 
@@ -173,7 +166,7 @@ class CieloClient
 
     public function getStatus($transaction)
     {
-        $ev = self::enviroment();
+        $ev = self::credentials();
 
 //        dd($ev, $transaction);
         $response = Http::withHeaders([
@@ -214,7 +207,7 @@ class CieloClient
     {
         return'Cancelamento';
 
-        $ev = self::enviroment();
+        $ev = self::credentials();
 
 //        dd($ev, $transaction);
         $response = Http::withHeaders([

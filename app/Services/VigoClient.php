@@ -503,7 +503,7 @@ class VigoClient
             if($billetIdCheck == $billet->Id){
                 if ($billet->Pago != 0) {
                     $resp['status'] = true;
-                    array_push($resp['billets'], $billet->Id);
+                    array_push($resp['billets'], $billet->NossoNumero);
                 }
             }
         }
