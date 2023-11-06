@@ -111,7 +111,7 @@ class PaymentController extends Controller
                             ];
                             $payment->save();
 
-                            ProcessCallback::dispatch($payment);
+//                            ProcessCallback::dispatch($payment);
                         }else{
                             $payment->installment = $ecommercePayment->Payment->Installments;
                             $payment->save();
