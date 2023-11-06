@@ -13,6 +13,7 @@ use App\Services\PaygoClient;
 use App\Services\PicpayClient;
 use App\Services\VigoClient;
 use App\Services\VigoServer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
@@ -21,6 +22,7 @@ use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\PaymentUpdateRequest;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
@@ -252,6 +254,14 @@ class PaymentController extends Controller
         }
 
         return new PaymentResource($payment);
+    }
+
+    public function runnerJob()
+    {
+        $payments = (new Payments())->runnerJobPaymentsPending();
+
+        return $payments;
+
     }
 
 }

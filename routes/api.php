@@ -57,6 +57,7 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
 
     Route::post('/customer/release', [CustomerController::class, "release"]);
 //    Route::get('/customer/{customer}/release', [CustomerController::class, "release"]);
+    Route::get('/payments-pending', [PaymentController::class, "findPending"]);
 
     // Vigo informations old payments
     Route::get('/old/cielo/payments', [VigoController::class, 'cielo']);
