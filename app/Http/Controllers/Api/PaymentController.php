@@ -258,9 +258,10 @@ class PaymentController extends Controller
 
     public function runnerJob()
     {
-        $payments = (new Payments())->runnerJobPaymentsPending();
+//        $payments = (new Payments())->findPending();
+        $response = (new Payments())->runnerJobPaymentsPending();
 
-        return $payments;
+        return $response;
 
     }
 

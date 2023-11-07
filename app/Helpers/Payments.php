@@ -4,9 +4,13 @@
 namespace App\Helpers;
 
 
+use App\Http\Resources\PaymentResource;
 use App\Jobs\ProcessBillets;
+use App\Jobs\ProcessCallback;
 use App\Models\Payment;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -36,9 +40,14 @@ class Payments
 
         $payments = Payment::whereDate('created_at', $today)
             ->where('status', 'created')
-            ->pluck('id');
+            ->get();
+//            ->pluck('id');
 
-        return $payments->toArray();
+        if (empty($payments->count())) {
+            return [];
+        }
+
+        return $payments;
     }
 
     public function runnerJobPaymentsPending()
@@ -48,9 +57,19 @@ class Payments
 
         foreach ($payments as $payment){
             //Processar fila para buscar o pagamento
-            $job = FindPaymentsPending::dispatch($payment)->onQueue('nome_da_fila');
-            array_push($jobs['payment_id'], $payment);
-            array_push($jobs['job'], Bus::dispatched($job)->first()->result);
+
+            $job = ProcessCallback::dispatch($payment);
+
+            $jobs[] = array(
+                'payment_id' => $payment->id,
+                'job'    => ''//Bus::dispatcher($job)->first()->result
+            );
+
+            Log::alert("Pagamento #{$payment->id} processado");
+
+//            $job = FindPaymentsPending::dispatch($payment)->onQueue('nome_da_fila');
+//            array_push($jobs['payment_id'], $payment);
+//            array_push($jobs['job'], Bus::dispatched($job)->first()->result);
             //Escrever o job para buscar/atualizar o status usando o ProcessCallBack ou buscando manualmente
         }
 

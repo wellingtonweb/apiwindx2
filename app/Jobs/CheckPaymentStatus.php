@@ -9,20 +9,18 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class FindPaymentsPending implements ShouldQueue
+class CheckPaymentStatus implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    protected $payments;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($payments)
+    public function __construct()
     {
-        $this->payments = $payments;
+        //
     }
 
     /**
@@ -32,8 +30,6 @@ class FindPaymentsPending implements ShouldQueue
      */
     public function handle()
     {
-        foreach ($this->payments as $payment) {
-            CheckPaymentStatus::dispatch($payment);
-        }
+        //
     }
 }
