@@ -5,9 +5,11 @@ namespace App\Helpers;
 
 
 use App\Http\Resources\PaymentResource;
+use App\Jobs\CouponMailPDF;
 use App\Jobs\ProcessBillets;
 use App\Jobs\ProcessCallback;
 use App\Models\Payment;
+use App\Services\VigoClient;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
@@ -75,5 +77,38 @@ class Payments
 
         // Obtendo o resultado dos jobs
         return $jobs;
+    }
+
+    public function sendCouponMailPDF($payment)
+    {
+//        $payment = (new API())->getPayment($id);
+//        dd($payment->created_at);
+        $mailContent = [];
+
+        $pay = date("d/m/Y", strtotime($payment->created_at));
+        $data = (new VigoClient())->getCustomer($payment->customer);
+        $customerFirstName = explode(" ", $data->customer[0]['full_name']);
+
+        $mailContent = [
+            "full_name" => $data->customer[0]['full_name'],
+            "email" => $data->customer[0]['email'],
+            "title" => "Comprovante de pagamento nº ".$payment->id." - Pago em ".$pay,
+            "body" => "Olá ".$customerFirstName[0].", segue em anexo seu comprovante de pagamento!",
+            "payment_id" => "Pagamento nº: ".$payment->id,
+            "payment_created" => "Data do pagamento: ".$pay,
+            "value" => "Valor pago: R$ ".number_format($payment->amount, 2, ',', ''),
+            "payment" => $payment->getAttributes()
+        ];
+
+        CouponMailPDF::dispatch($mailContent);
+
+//        dd([
+////            'pay' => $pay,
+////            'payment' => $payment->getAttributes()
+//            'data' => $mailContent
+//        ]);
+//        return response()->json('E-mail enviado com sucesso!');
+        return $mailContent;
+
     }
 }

@@ -265,4 +265,9 @@ class PaymentController extends Controller
 
     }
 
+    public function sendCoupon(Payment $payment)
+    {
+        return (new Payments())->sendCouponMailPDF($payment);
+    }
+
 }
