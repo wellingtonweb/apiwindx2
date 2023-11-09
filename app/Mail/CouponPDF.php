@@ -29,8 +29,6 @@ class CouponPDF extends Mailable
      */
     public function build()
     {
-//        dd($this->data['date_full']);
-
         $paper = array(0,0,200,460);
         $pdf = PDF::loadView('pdf.coupon', $this->data)->setPaper( $paper, 'portrait');
 

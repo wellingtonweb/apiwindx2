@@ -81,45 +81,32 @@ class Payments
         return $jobs;
     }
 
-    public function sendCouponMailPDF($payment)
+    public function sendCoupon($payment_id)
     {
-//        $payment = (new API())->getPayment($id);
-//        dd($payment->created_at);
-        $mailContent = [];
-
-        $pay = date("d/m/Y", strtotime($payment->created_at));
-        $data = (new VigoClient())->getCustomer($payment->customer);
-        $customerFirstName = explode(" ", $data->customer[0]['full_name']);
-
-        $mailContent = [
-            "full_name" => $data->customer[0]['full_name'],
-            "email" => "sup.windx@gmail.com",
-//            "email" => $data->customer[0]['email'],
-            "title" => "Comprovante de pagamento nº ".$payment->id." - Pago em ".$pay,
-            "body" => "Olá ".$customerFirstName[0].", segue em anexo seu comprovante de pagamento!",
-            "payment_id" => "Pagamento nº: ".$payment->id,
-            "payment_created" => "Data do pagamento: ".$pay,
-            "value" => "Valor pago: R$ ".number_format($payment->amount, 2, ',', ''),
-            "payment" => $payment->getAttributes(),
-            "date_full" => (new Functions)->getDateFull()
-        ];
-
-//        setlocale(LC_ALL, 'pt_BR', 'pt_BR.utf-8', 'pt_BR.utf-8', 'portuguese');
-//date_default_timezone_set('America/Sao_Paulo');
+//        $payment = Payment::where('id', '=', $payment_id)->firstOrFail();
 //
-//$data_extenso = strftime('%A, %d de %B de %Y às %H:%M:%S', (new DateTime())->getTimestamp());
+//        $mailContent = [];
 //
-//dd(\App\Helpers\Functions::getDateFull());
+//        $pay = date("d/m/Y", strtotime($payment->created_at));
+//        $data = (new VigoClient())->getCustomer($payment->customer);
+//        $customerFirstName = explode(" ", $data->customer[0]['full_name']);
+//
+//        $mailContent = [
+//            "full_name" => $data->customer[0]['full_name'],
+//            "email" => "sup.windx@gmail.com",
+////            "email" => $data->customer[0]['email'],
+//            "title" => "Comprovante de pagamento nº ".$payment->id." - Pago em ".$pay,
+//            "body" => "Olá ".$customerFirstName[0].", segue em anexo seu comprovante de pagamento!",
+//            "payment_id" => "Pagamento nº: ".$payment->id,
+//            "payment_created" => "Data do pagamento: ".$pay,
+//            "value" => "Valor pago: R$ ".number_format($payment->amount, 2, ',', ''),
+//            "payment" => $payment->getAttributes(),
+//            "date_full" => (new Functions)->getDateFull()
+//        ];
 
-        CouponMailPDF::dispatch($mailContent);
+        CouponMailPDF::dispatch($payment_id);
 
-//        dd([
-////            'pay' => $pay,
-////            'payment' => $payment->getAttributes()
-//            'data' => $mailContent
-//        ]);
         return response()->json('E-mail enviado com sucesso!');
-//        return $mailContent;
 
     }
 }
