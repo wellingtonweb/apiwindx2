@@ -4,6 +4,8 @@
 namespace App\Helpers;
 
 
+use DateTime;
+
 class Functions
 {
 
@@ -34,6 +36,14 @@ class Functions
         }
 
         return true;
+    }
+
+    public function getDateFull()
+    {
+        setlocale(LC_ALL, 'pt_BR', 'pt_BR.utf-8', 'pt_BR.utf-8', 'portuguese');
+        date_default_timezone_set('America/Sao_Paulo');
+
+        return strftime('%A, %d de %B de %Y às %H:%M:%S', (new DateTime())->getTimestamp());
     }
 
 }

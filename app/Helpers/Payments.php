@@ -4,12 +4,14 @@
 namespace App\Helpers;
 
 
+use App\Helpers\Functions;
 use App\Http\Resources\PaymentResource;
 use App\Jobs\CouponMailPDF;
 use App\Jobs\ProcessBillets;
 use App\Jobs\ProcessCallback;
 use App\Models\Payment;
 use App\Services\VigoClient;
+use DateTime;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
@@ -91,14 +93,23 @@ class Payments
 
         $mailContent = [
             "full_name" => $data->customer[0]['full_name'],
-            "email" => $data->customer[0]['email'],
+            "email" => "sup.windx@gmail.com",
+//            "email" => $data->customer[0]['email'],
             "title" => "Comprovante de pagamento nº ".$payment->id." - Pago em ".$pay,
             "body" => "Olá ".$customerFirstName[0].", segue em anexo seu comprovante de pagamento!",
             "payment_id" => "Pagamento nº: ".$payment->id,
             "payment_created" => "Data do pagamento: ".$pay,
             "value" => "Valor pago: R$ ".number_format($payment->amount, 2, ',', ''),
-            "payment" => $payment->getAttributes()
+            "payment" => $payment->getAttributes(),
+            "date_full" => (new Functions)->getDateFull()
         ];
+
+//        setlocale(LC_ALL, 'pt_BR', 'pt_BR.utf-8', 'pt_BR.utf-8', 'portuguese');
+//date_default_timezone_set('America/Sao_Paulo');
+//
+//$data_extenso = strftime('%A, %d de %B de %Y às %H:%M:%S', (new DateTime())->getTimestamp());
+//
+//dd(\App\Helpers\Functions::getDateFull());
 
         CouponMailPDF::dispatch($mailContent);
 
@@ -107,8 +118,8 @@ class Payments
 ////            'payment' => $payment->getAttributes()
 //            'data' => $mailContent
 //        ]);
-//        return response()->json('E-mail enviado com sucesso!');
-        return $mailContent;
+        return response()->json('E-mail enviado com sucesso!');
+//        return $mailContent;
 
     }
 }
