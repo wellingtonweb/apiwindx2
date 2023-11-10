@@ -54,4 +54,9 @@ class Functions
         return strftime('%A, %d de %B de %Y', (new DateTime())->getTimestamp());
     }
 
+    public function convertDateTime($date)
+    {
+        return date("d/m/Y H:i:s", strtotime($date) - 3 * 60 * 60);
+    }
+
 }

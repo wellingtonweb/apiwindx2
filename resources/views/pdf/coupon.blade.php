@@ -122,7 +122,8 @@
                         <tr class="ttu b-top">
                             <td class="right">Data Hora: </td>
                             <td id="coupon_created_at" class="left">
-                                {{date("d/m/Y H:i:s", strtotime($payment['created_at']))}}
+                                {!! \App\Helpers\Functions::convertDateTime($payment['created_at']) !!}
+{{--                                {{date("d/m/Y H:i:s", strtotime($payment['created_at']))}}--}}
                             </td>
                         </tr>
                         <tr class="ttu b-top" >

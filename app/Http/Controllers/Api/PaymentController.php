@@ -270,6 +270,9 @@ class PaymentController extends Controller
     {
         CouponMailPDF::dispatch($payment_id);
 
+//        dd((new Functions())->convertDateTime('2023-11-10 14:37:50'));
+
+
         return response()->json('E-mail enviado com sucesso!');
 
     }

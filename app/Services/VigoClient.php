@@ -227,9 +227,6 @@ class VigoClient
             'caixa' => $caixa,
         ];
 
-//        $textPayment = "Boleto {$billet->billet_id}/{$billet->reference}, liquidado com valor R$ {$billet->total} no caixa nº {$caixa}.
-//        Pagamento referente {$payment->reference}, usando o método ".strtoupper($payment_type)." via ".strtoupper($place).".";
-
         $response = Http::accept('application/json')
             ->withToken($this->token)
             ->post($this->apiUrl . "/api/app_liquidaboleto", [
@@ -242,7 +239,7 @@ class VigoClient
 
         if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
         {
-            Log::alert(json_encode($response->status() . ' - '. $response->object()));
+            Log::alert(json_encode($response->status() . ' - ('.$billet->billet_id.')' . $response->object()));
 
             CouponMailPDF::dispatch($payment->paymentId);
 
