@@ -2,8 +2,6 @@
 {{$data['date_full']}}<br><br>
 
 Olá <b>{{$data['first_name']}}</b>, segue em anexo seu comprovante de pagamento!
-{{--{{ $data['body'] }}--}}
-
 
 <b>Pagamento nº: </b>{{ $data['payment_id'] }}<br>
 <b>{{count($data['billets']) > 1 ? 'Faturas Nº: ' : 'Fatura Nº: '}}</b>
