@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\CouponMailPDF;
 use App\Models\Payment;
 use App\Services\VigoServer;
 use Illuminate\Support\Collection;
@@ -217,7 +218,8 @@ class VigoClient
     {
         $billet = (object)$billet;
         $payment = (object)$payment;
-        $caixa = self::getCaixa($billet->company_id, $payment->place);
+        $caixa = 38;
+//        $caixa = self::getCaixa($billet->company_id, $payment->place);
 
         $auditInfo = [
             'payment' => $payment,
@@ -241,11 +243,14 @@ class VigoClient
         if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
         {
             Log::alert(json_encode($response->status() . ' - '. $response->object()));
+
+            CouponMailPDF::dispatch($payment->paymentId);
+
             (new VigoServer())->setAuditPayment($auditInfo, 200);
 
             return $response->object();
         } else {
-            Log::alert('Erro: Boleto nº '. $billet->billet_id. ' já foi liquidado!');
+            Log::alert('Erro: Boleto nº '. $billet->billet_id . ' já foi liquidado!');
             (new VigoServer())->setAuditPayment($auditInfo, 404);
 
             return $response->throw();

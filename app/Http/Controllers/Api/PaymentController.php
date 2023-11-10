@@ -114,7 +114,7 @@ class PaymentController extends Controller
                             ];
                             $payment->save();
 
-//                            ProcessCallback::dispatch($payment);
+                            ProcessCallback::dispatch($payment);
                         }else{
                             $payment->installment = $ecommercePayment->Payment->Installments;
                             $payment->save();
@@ -272,7 +272,6 @@ class PaymentController extends Controller
 
         return response()->json('E-mail enviado com sucesso!');
 
-//        return (new Payments())->sendCoupon($payment_id);
     }
 
 }

@@ -56,4 +56,14 @@ class ProcessBillets implements ShouldQueue
             //$this->vigoClient->reverseBillet((array)$this->billet);
         }
     }
+
+//    /**
+//     * Determine the time at which the listener should timeout.
+//     *
+//     * @return \DateTime
+//     */
+//    public function retryUntil()
+//    {
+//        return now()->addMinutes(1);
+//    }
 }

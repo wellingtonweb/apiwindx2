@@ -46,7 +46,7 @@ class VigoServer
                     'hora'   =>   $this->today->format('H:i:s'),
                     'operador'   =>   'API',
                     'acao'   =>   "BOLETO LIQUIDADO: {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount} | CAIXA: {$auditInfo['caixa']}
-            | PAG. REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
+            | PAG. ID: {$auditInfo['payment']->paymentId} | REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
                     'idcliente'   =>   $auditInfo['payment']->customerId,
             ]);
         }else{
@@ -56,7 +56,7 @@ class VigoServer
                     'hora'   =>   $this->today->format('H:i:s'),
                     'operador'   =>   'API',
                     'acao'   =>   "PAGAMENTO DUPLICADO DO BOLETO : {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount}
-            | PAG. REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
+            | PAG. ID: {$auditInfo['payment']->paymentId} | REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
                     'idcliente'   =>   $auditInfo['payment']->customerId,
                 ]);
         }

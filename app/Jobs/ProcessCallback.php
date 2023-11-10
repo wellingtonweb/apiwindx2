@@ -23,7 +23,7 @@ class ProcessCallback implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $payment;
-    public $tries = 3;
+//    public $tries = 3;
 
     /**
      * Create a new job instance.
@@ -175,6 +175,7 @@ class ProcessCallback implements ShouldQueue
             $action = ($this->payment->status === "approved") ? true : false;
             $paymentDataSlim = [
                 'customerId' => $this->payment->customer,
+                'paymentId' => $this->payment->id,
                 'reference' => $this->payment->reference,
                 'method' => $this->payment->method,
                 'payment_type' => $this->payment->payment_type,
@@ -190,4 +191,14 @@ class ProcessCallback implements ShouldQueue
             }
         }
     }
+
+//    /**
+//     * Determine the time at which the listener should timeout.
+//     *
+//     * @return \DateTime
+//     */
+//    public function retryUntil()
+//    {
+//        return now()->addMinutes(1);
+//    }
 }
