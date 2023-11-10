@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\Functions;
 use App\Helpers\Payments;
+use App\Jobs\CouponMailPDF;
 use App\Jobs\ProcessBillets;
 use App\Jobs\ProcessCallback;
 use App\Jobs\ProcessRevertPayment;
@@ -267,9 +268,11 @@ class PaymentController extends Controller
 
     public function sendMailCouponPDF($payment_id)
     {
+        CouponMailPDF::dispatch($payment_id);
 
+        return response()->json('E-mail enviado com sucesso!');
 
-        return (new Payments())->sendCoupon($payment_id);
+//        return (new Payments())->sendCoupon($payment_id);
     }
 
 }

@@ -25,6 +25,7 @@ class CouponMailPDF implements ShouldQueue
     private $pay;
     private $customerFirstName;
     private $mailContent;
+    private $billets;
 
     /**
      * Create a new job instance.
@@ -37,17 +38,32 @@ class CouponMailPDF implements ShouldQueue
         $this->customer = (new VigoClient())->getCustomer($this->payment['customer']);
         $this->pay = date("d/m/Y", strtotime($this->payment['created_at']));
         $this->customerFirstName = explode(" ", $this->customer->customer[0]['full_name']);
+        $this->billets = json_decode(($this->payment->getAttributes())['billets'], true);
+//        dd(json_decode(($this->payment->getAttributes())['billets'], true));
+
+//        foreach ($this->billets as $info){
+//            if (count($this->billets) > 1){
+//                $this->infoBillets = $info['reference'] . (!empty($info['duedate']) ? ' (' . $info['duedate'] . ')' : '') . ', ';
+//            }else{
+//                $this->infoBillets = $info['reference'] . (!empty($info['duedate']) ? ' (' . $info['duedate'] . ')' : '');
+//            }
+//        }
+
         $this->mailContent = [
             "full_name" => $this->customer->customer[0]['full_name'],
+            "first_name" => $this->customerFirstName[0],
             "email" => "sup.windx@gmail.com",
 //            "email" => $data->customer[0]['email'],
             "title" => "Comprovante de pagamento nº ".$this->payment->id." - Pago em ".$this->pay,
-            "body" => "Olá ".$this->customerFirstName[0].", segue em anexo seu comprovante de pagamento!",
-            "payment_id" => "Pagamento nº: ".$payment_id,
-            "payment_created" => "Data do pagamento: ".$this->pay,
-            "value" => "Valor pago: R$ ".number_format($this->payment->amount, 2, ',', ''),
+//            "body" => "Olá ".$this->customerFirstName[0].", segue em anexo seu comprovante de pagamento!",
+            "payment_id" => $payment_id,
+            "payment_created" => $this->pay,
+            "billets" => $this->billets,
+//            "billets" => (count($this->billets) > 1 ? "Faturas Nº: " : "Fatura Nº: "). $this->infoBillets,
+            "value" => number_format($this->payment->amount, 2, ',', ''),
             "payment" => $this->payment->getAttributes(),
-            "date_full" => (new Functions)->getDateFull()
+            "date_full" => (new Functions)->getDateFull(),
+            "date_time_full" => (new Functions)->getDateTimeFull()
         ];
     }
 

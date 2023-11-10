@@ -27,6 +27,8 @@ use Illuminate\Support\Str;
 
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 
+Route::post('callback', [CallbackController::class, "index"]);
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 })->name('api.user');
@@ -36,11 +38,11 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::apiResource('payments', PaymentController::class);
     Route::apiResource('terminals', TerminalController::class);
     Route::get('payments/cancel/{payment}', [PaymentController::class, "cancelPayment"]);
-
+    Route::get('/payments-pending', [PaymentController::class, "runnerJob"]);
+    Route::get('/send-mail-coupon-pdf/{payment}', [PaymentController::class, "sendMailCouponPDF"]);
 
     // Customer Payments
     Route::get('/customer/{customer}/payments', [CustomerController::class, "payments"]);
-
 
     // Terminal Payments
     Route::get('/terminals/{terminal}/payments', [TerminalPaymentsController::class, 'index']);
@@ -57,8 +59,6 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
 
     Route::post('/customer/release', [CustomerController::class, "release"]);
 //    Route::get('/customer/{customer}/release', [CustomerController::class, "release"]);
-    Route::get('/payments-pending', [PaymentController::class, "runnerJob"]);
-    Route::get('/send-mail-coupon-pdf/{payment}', [PaymentController::class, "sendMailCouponPDF"]);
 
     // Vigo informations old payments
     Route::get('/old/cielo/payments', [VigoController::class, 'cielo']);
@@ -68,22 +68,3 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
 
 });
 
-Route::post('callback', [CallbackController::class, "index"]);
-
-/*Route::get('teste', function () {
-    $payment = Payment::find(3)->first();
-
-foreach ($payment->billets as $billet){
-
-        if (Str::contains($payment->status, ['approved', 'canceled','chargeback'])) {
-//            $action = ($payment->status === "approved") ? true : false;
-            $action = true;
-            ProcessBillets::dispatch((array)$billet,$action);
-//                ($action) ?  (new VigoClient())->checkoutBillet($billet) : (new VigoClient())->reverseBillet($billet);
-
-        }
-
-
-}
-
-});*/

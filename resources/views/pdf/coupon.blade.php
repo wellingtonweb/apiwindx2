@@ -51,13 +51,13 @@
 
         .comprovante .right {
             text-align: right !important;
-            width: 40%;
+            width: 35%;
             font-weight: bold;
         }
 
         .comprovante .left {
             text-align: left !important;
-            width: 60%;
+            width: 65%;
         }
 
         @media print{
@@ -99,23 +99,17 @@
                                 <span style="letter-spacing: 1px; padding-top: 1rem; padding-bottom: 1rem;">(Cupom não fiscal)</span><br>
                                 <p>
                                 <small style="color: #5b5b5b; padding-top: 1rem; padding-bottom: 1rem;">
-                                    {{ $date_full }}
+                                    {{ $date_time_full }}
                                 </small>
                                 </p>
                             </th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr class="ttu b-top" >
-                            <td class="right">Cliente: </td>
-                            <td id="coupon_reference-" class="left" style="padding-top: 1rem">
-                                <span id="coupon_customer_id">{{ $payment['customer'] }}</span>
-                                <span class="coupon_customer_fullname">- {{ $full_name }}</span>
-                            </td>
-                        </tr>
+
                         <tr class="ttu b-top">
-                            <td class="right">Pagamento ID: </td>
-                            <td id="coupon_reference" class="left" style="max-width: 74mm">
+                            <td class="right" style="padding-top: 1rem">Pagamento Nº: </td>
+                            <td id="coupon_reference" class="left" style="max-width: 74mm; padding-top: 1rem">
                                 {{$payment['id']}}
                             </td>
                         </tr>
@@ -131,9 +125,16 @@
                                 {{date("d/m/Y H:i:s", strtotime($payment['created_at']))}}
                             </td>
                         </tr>
+                        <tr class="ttu b-top" >
+                            <td class="right">Cliente: </td>
+                            <td id="coupon_reference-" class="left" >
+                                <span id="coupon_customer_id">{{ $payment['customer'] }}</span>
+                                <span class="coupon_customer_fullname">- {{ $full_name }}</span>
+                            </td>
+                        </tr>
                         <tr class="ttu b-top">
                             <td class="right">
-                                {{count(json_decode($payment['billets'], true)) > 1 ? 'Faturas:' : 'Fatura:'}}
+                                {{count(json_decode($payment['billets'], true)) > 1 ? 'Faturas Nº: ' : 'Fatura Nº: '}}
                             </td>
                             <td id="coupon_billets" class="left">
                                 @foreach(json_decode($payment['billets'], true) as $info)

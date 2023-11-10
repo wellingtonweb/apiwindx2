@@ -81,32 +81,5 @@ class Payments
         return $jobs;
     }
 
-    public function sendCoupon($payment_id)
-    {
-//        $payment = Payment::where('id', '=', $payment_id)->firstOrFail();
-//
-//        $mailContent = [];
-//
-//        $pay = date("d/m/Y", strtotime($payment->created_at));
-//        $data = (new VigoClient())->getCustomer($payment->customer);
-//        $customerFirstName = explode(" ", $data->customer[0]['full_name']);
-//
-//        $mailContent = [
-//            "full_name" => $data->customer[0]['full_name'],
-//            "email" => "sup.windx@gmail.com",
-////            "email" => $data->customer[0]['email'],
-//            "title" => "Comprovante de pagamento nº ".$payment->id." - Pago em ".$pay,
-//            "body" => "Olá ".$customerFirstName[0].", segue em anexo seu comprovante de pagamento!",
-//            "payment_id" => "Pagamento nº: ".$payment->id,
-//            "payment_created" => "Data do pagamento: ".$pay,
-//            "value" => "Valor pago: R$ ".number_format($payment->amount, 2, ',', ''),
-//            "payment" => $payment->getAttributes(),
-//            "date_full" => (new Functions)->getDateFull()
-//        ];
 
-        CouponMailPDF::dispatch($payment_id);
-
-        return response()->json('E-mail enviado com sucesso!');
-
-    }
 }
