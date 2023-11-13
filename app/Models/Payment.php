@@ -23,7 +23,8 @@ class Payment extends Model
         'payment_type',
         'receipt',
         'terminal_id',
-        'status'
+        'status',
+        'customer_origin'
     ];
 
     protected $searchableFields = ['*'];

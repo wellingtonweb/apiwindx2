@@ -35,6 +35,7 @@ class CieloClient
     private $returnUrl;
     private $response;
 
+//    public function __construct()
     public function __construct(Payment $order, array $paymentData)
     {
         $this->order = $order;
@@ -65,21 +66,22 @@ class CieloClient
     public function credit()
     {
         $ev = self::credentials();
+//        $this->paymentData = (object) $paymentData;
 //        dd($ev);
 
-        $initTransInd = [
-            'Category' => null,
-            'Subcategory' => null,
-        ];
-
-        if($this->paymentData->card['bandeira'] == 'Master'){
-            if($this->order->recurrent == true){
-                $initTransInd = [
-                    'Category' => "M1",
-                    'Subcategory' => "Subscription",
-                ];
-            }
-        }
+//        $initTransInd = [
+//            'Category' => null,
+//            'Subcategory' => null,
+//        ];
+//
+//        if($paymentData->card['bandeira'] == 'Master'){
+//            if($order->recurrent == true){
+//                $initTransInd = [
+//                    'Category' => "M1",
+//                    'Subcategory' => "Subscription",
+//                ];
+//            }
+//        }
 
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
@@ -112,7 +114,7 @@ class CieloClient
         return $response;
     }
 
-    public function debit()
+    public function debit(Payment $order, array $paymentData)
     {
         $ev = self::credentials();
 
@@ -133,30 +135,31 @@ class CieloClient
         return $this->pay();
     }
 
-    public function pix()
+    public function pix(Payment $order, array $paymentData)
     {
         $ev = self::credentials();
+        $this->paymentData = (object) $paymentData;
 
 //        dd($ev, $this->paymentData);
 
-        $identityType = preg_replace('/[^0-9]/', '', $this->paymentData->buyer['cpf_cnpj']);
+        $identityType = preg_replace('/[^0-9]/', '', $paymentData->buyer['cpf_cnpj']);
 
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
             "MerchantId" => $ev['merchantId'],
             "MerchantKey" => $ev['merchantKey'],
-            'RequestId' => $this->paymentData->reference
+            'RequestId' => $paymentData->reference
 
         ])->post("https://api.cieloecommerce.cielo.com.br/1/sales/", [
-            "MerchantOrderId" => $this->order->reference,
+            "MerchantOrderId" => $order->reference,
             "Customer" => [
-                "Name" => "{$this->paymentData->buyer['first_name']} {$this->paymentData->buyer['last_name']}",
-                "Identity" => $this->paymentData->buyer['cpf_cnpj'],
+                "Name" => "{$paymentData->buyer['first_name']} {$paymentData->buyer['last_name']}",
+                "Identity" => $paymentData->buyer['cpf_cnpj'],
                 "IdentityType" => strlen($identityType) == 11 ? 'CPF' : 'CNPJ'
             ],
             "Payment" => [
                 "Type" => "Pix",
-                "Amount" => $this->order->amount * 100
+                "Amount" => $order->amount * 100
             ]
         ]);
 
@@ -174,6 +177,8 @@ class CieloClient
             "MerchantId" => $ev['merchantId'],
             "MerchantKey" => $ev['merchantKey'],
         ])->get("{$ev['apiQueryUrl']}1/sales/{$transaction}");
+
+//        dd($response->object());
 
         return [
             'status' => self::rewriteStatus($response->object()->Payment->Status),

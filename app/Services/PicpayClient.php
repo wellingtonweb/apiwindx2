@@ -70,12 +70,15 @@ class PicpayClient
                     break;
             }
 
-            if($this->payment->save()){
-                return $this->payment;
-            }else{
-                return false;
-            }
+
+
+//            if($this->payment->save()){
+//                return $this->payment;
+//            }else{
+//                return false;
+//            }
         }
+        return $this->payment;
     }
 
 }

@@ -123,7 +123,6 @@
                             <td class="right">Data Hora: </td>
                             <td id="coupon_created_at" class="left">
                                 {!! \App\Helpers\Functions::convertDateTime($payment['created_at']) !!}
-{{--                                {{date("d/m/Y H:i:s", strtotime($payment['created_at']))}}--}}
                             </td>
                         </tr>
                         <tr class="ttu b-top" >
@@ -139,7 +138,7 @@
                             </td>
                             <td id="coupon_billets" class="left">
                                 @foreach(json_decode($payment['billets'], true) as $info)
-                                    @if(json_decode($payment['billets'], true) > 1)
+                                    @if(count(json_decode($payment['billets'], true)) > 1)
                                         {{ $info['reference'] }} {{!empty($info['duedate']) ? '('.$info['duedate'].'), ' : ', ' }}<br>
                                     @else
                                         {{ $info['reference'] }} {{!empty($info['duedate']) ? '('.$info['duedate'].')' : '' }}

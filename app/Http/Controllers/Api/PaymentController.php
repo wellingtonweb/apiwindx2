@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helpers\Functions;
 use App\Helpers\Payments;
 use App\Jobs\CouponMailPDF;
+use App\Jobs\FindPaymentsPending;
 use App\Jobs\ProcessBillets;
 use App\Jobs\ProcessCallback;
 use App\Jobs\ProcessRevertPayment;
@@ -27,6 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Facades\Bus;
 
 class PaymentController extends Controller
 {
@@ -56,6 +58,8 @@ class PaymentController extends Controller
         $this->authorize('create', Payment::class);
 
         $validated = $request->validated();
+
+//        dd(json_decode($request->customer_origin, true));
 
         $billetIsPay = [];
 
@@ -103,6 +107,7 @@ class PaymentController extends Controller
                         if ($payment->save() && $payment->status == "approved"){
                             $payment->transaction = $ecommercePayment->object()->Payment->AuthorizationCode;
                             $payment->installment = $ecommercePayment->object()->Payment->Installments;
+                            $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
                             $payment->receipt = [
                                 'card_number' => $ecommercePayment->object()->Payment->CreditCard->CardNumber,
                                 'payer' => $ecommercePayment->object()->Payment->CreditCard->Holder,
@@ -123,11 +128,13 @@ class PaymentController extends Controller
                     }
                     elseif($payment->payment_type === 'debit')
                     {
+                        dd('Função Débito desabilitada temporariamente!');
                         $ecommercePayment = $cieloPayment->debit();
                         $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
 
                         if ($payment->save() && $payment->status == "approved"){
                             $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                            $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
                             $payment->receipt = [
                                 'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
                                 'flag' => $ecommercePayment->Payment->CreditCard->Brand,
@@ -145,11 +152,13 @@ class PaymentController extends Controller
                     }
                     else
                     {
-                        $ecommercePayment = $cieloPayment->pix();
+//                        $ecommercePayment = $cieloPayment->pix();
+                        $ecommercePayment = (new CieloClient())->pix($payment, $validated);
 
                         if($ecommercePayment->Payment->Status === 12){
                             $payment->transaction = $ecommercePayment->Payment->PaymentId;
-                            $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
+                            $payment->status = CieloClient::rewriteStatus($ecommercePayment->Payment->Status);
+                            $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
                             $payment->save();
 
                             $payment->qrCode = "data:image\/png;base64,{$ecommercePayment->Payment->QrCodeBase64Image}";
@@ -166,6 +175,9 @@ class PaymentController extends Controller
                 }else{
                     $buyer = (object)$validated['buyer'];
                     $response = (new PicpayClient($payment))->pay($buyer);
+                    $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
+                    $payment->save();
+
                     $payment->qrCode = $response->qrcode->base64;
                 }
 
@@ -193,7 +205,6 @@ class PaymentController extends Controller
         }
     }
 
-
     public function cancelPayment(Payment $payment)
     {
 //        dd($payment->method);
@@ -204,26 +215,33 @@ class PaymentController extends Controller
 
             switch ($payment->method){
                 case 'ecommerce':
-                    //            $paymentId = $payment->transaction;
-                    $paymentId = "153d7927-d443-4999-ba86-99f16b23ed0c";//pix 1,00 teste
+                    $paymentId = $payment->transaction;
+//                    $paymentId = "153d7927-d443-4999-ba86-99f16b23ed0c";//pix 1,00 teste
 //                    $paymentId = "1a35ae17-7898-4209-811f-63a153e201d5";//pix do cliente
-                    //            $paymentAmount = $payment->amount;
-                    $paymentAmount = 1.00 * 100;
+                    $paymentAmount = $payment->amount * 100;
+//                    $paymentAmount = 1.00 * 100;
+
+//                    $ev = [
+//                        'merchantId' => config('services.cielo.production.api_merchant_id'),
+//                        'merchantKey' => config('services.cielo.production.api_merchant_key'),
+//                        'apiUrl' => config('services.cielo.production.api_url'),
+//                        'apiQueryUrl' => config('services.cielo.production.api_query_url'),
+//                    ] ;
 
                     $ev = [
-                        'merchantId' => config('services.cielo.production.api_merchant_id'),
-                        'merchantKey' => config('services.cielo.production.api_merchant_key'),
-                        'apiUrl' => config('services.cielo.production.api_url'),
-                        'apiQueryUrl' => config('services.cielo.production.api_query_url'),
+                        'merchantId' => config('services.cielo.sandbox.api_merchant_id'),
+                        'merchantKey' => config('services.cielo.sandbox.api_merchant_key'),
+                        'apiUrl' => config('services.cielo.sandbox.api_url'),
+                        'apiQueryUrl' => config('services.cielo.sandbox.api_query_url'),
                     ] ;
 
-                    dd($ev['apiUrl']."1/sales/{".$paymentId."}/void?amount=".$paymentAmount);
+//                    dd($ev['apiUrl']."1/sales/{$paymentId}/void?amount=".$paymentAmount, $ev);
 
                     $response = Http::withHeaders([
                         "Content-Type" => "application/json",
                         "MerchantId" => $ev['merchantId'],
                         "MerchantKey" => $ev['merchantKey'],
-                    ])->put($ev['apiUrl']."1/sales/{$paymentId}/void?amount=".$paymentAmount);
+                    ])->put($ev['apiUrl']."1/sales/{".$paymentId."}/void?amount=".$paymentAmount);
 
                     break;
                 case 'tef':
@@ -249,20 +267,128 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
+//        $response = CieloClient::getStatus($payment->transaction);
+//        dd($response);
+
         if ($payment) {
-//        if ($payment && $payment['status'] === "created") {
-            ProcessCallback::dispatch($payment);
+            if($payment->method === "tef"){
+//                $payment = Payments::tef($payment, $request->all());
+                if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
+                {
+                    $this->proccessBillets();
+                }
+                else
+                {
+                    $response = (new PaygoClient())->getStatus($this->payment->reference);
+                    $this->payment->status = $response['status'];
+                    $this->payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
+
+                    if ($this->payment->save() && $this->payment->status == "approved"){
+                        $this->payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+//                            $this->payment->customer_origin =
+
+                        //"CRIAR FUNÇÃO PARA TRATAR OS DADOS DO CUPOM"
+                        $this->payment->receipt = [
+                            'card_number' => null,
+                            'flag' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->bandeira,
+                            'card_ent_mode' => null,//approximation or password
+                            'payer' => null,
+                            'transaction_code' => null,
+                            'receipt' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente
+                        ];
+                    }
+
+                    $this->payment->save();
+                    $this->proccessBillets();
+                    dd('TEf');
+                }
+            }
+
+            if($payment->method === "ecommerce"){
+//                $payment = Payments::ecommerce($payment, $request->all());
+
+                $ecommercePayment = null;
+//                    (object)$this->payment;
+
+                $cieloPayment = (new CieloClient($payment, $request));
+//        dd($payment->transaction);
+
+                $response = $cieloPayment->getStatus($payment->transaction);
+
+                dd($response);
+
+                if($response != null){
+                    $payment->status = $response['status'];
+
+                    if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
+                    {
+                        if(Str::contains($payment->payment_type,["credit", "debit"]))
+                        {
+                            if ($payment->save() && $payment->status == "approved")
+                            {
+                                $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                $payment->receipt = [
+                                    'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
+                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
+                                    'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
+                                    'payer' => $ecommercePayment->Payment->CreditCard->Holder,
+                                    'in_installments' => $ecommercePayment->Payment->Installments,
+                                    'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                    'receipt' => null
+                                ];
+                            }
+                        }
+
+                        $payment->save();
+                        self::proccessBillets();
+                    }
+                }
+
+                return $payment;
+
+            }
+
+            if($payment->method === "picpay"){
+//                $payment = Payments::picpay($payment, $request->all());
+                $payment->status = (new PicpayClient($payment))->getStatus()->status;
+
+                if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
+                {
+                    ProcessCallback::dispatch($payment);
+                }
+
+                $payment->save();
+
+                return $payment;
+            }
         }
 
         return new PaymentResource($payment);
     }
 
-    public function runnerJob()
+    public function paymentsPending()
     {
-//        $payments = (new Payments())->findPending();
-        $response = (new Payments())->runnerJobPaymentsPending();
+//        $today = Carbon::now()->toDateString();
+//
+//        $payments = Payment::whereDate('created_at', $today)
+//            ->where('status', 'created')
+//            ->get();
+//
+////        $response = $payments->getAttributes();
+////
+////        dd($payments[0]['customer']);
+//
+//        $job = FindPaymentsPending::dispatch($payments);
+//
+//        // Agora, você pode obter o resultado do job
+////        $response = Bus::dispatched($job)->first()->result;
+//
+//        // Faça algo com o resultado
+//        dd($job);
 
-        return $response;
+        Payments::findPending();
+
+        return response()->json('Iniciado com sucesso!');
 
     }
 

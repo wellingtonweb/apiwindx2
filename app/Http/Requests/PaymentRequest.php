@@ -70,6 +70,7 @@ class PaymentRequest extends FormRequest
             'card.bandeira' => ['required_if:method,ecommerce|string|required_if:payment_tupe,credit,debit'],
             'card.expiration_date' => ['required_if:method,ecommerce|date_format:m/Y|required_if:payment_tupe,credit,debit'],
             //--------------------------------------------------------------
+//            'customer_origin' => ['array']
 
         ];
 

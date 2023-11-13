@@ -38,7 +38,7 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::apiResource('payments', PaymentController::class);
     Route::apiResource('terminals', TerminalController::class);
     Route::get('payments/cancel/{payment}', [PaymentController::class, "cancelPayment"]);
-    Route::get('/payments-pending', [PaymentController::class, "runnerJob"]);
+    Route::get('/payments-pending', [PaymentController::class, "paymentsPending"]);
     Route::get('/send-mail-coupon-pdf/{payment}', [PaymentController::class, "sendMailCouponPDF"]);
 
     // Customer Payments

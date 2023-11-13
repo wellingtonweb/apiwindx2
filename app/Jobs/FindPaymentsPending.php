@@ -8,6 +8,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+
 
 class FindPaymentsPending implements ShouldQueue
 {
@@ -32,8 +34,13 @@ class FindPaymentsPending implements ShouldQueue
      */
     public function handle()
     {
+
+//        dd($this->payments);
+
         foreach ($this->payments as $payment) {
-            CheckPaymentStatus::dispatch($payment);
+//            dd($payment);
+//            Log::alert($payment['id']);
+            ProcessCallback::dispatch($payment);
         }
     }
 }
