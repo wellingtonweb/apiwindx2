@@ -24,6 +24,7 @@ use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\PaymentUpdateRequest;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -274,47 +275,22 @@ class PaymentController extends Controller
             {
                 $response = (new PaygoClient())->getStatus($payment->reference);
 
-                $payment->status = $response['status'];
+                if($response){
+                    $payment->status = $response['status'];
 
-//                dd($response['receipt'] );
+                    if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
+                    {
+                        $payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
 
-                if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
-                {
-                    $payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
+                        if ($payment->save() && $payment->status == "approved"){
+                            $payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+                            $payment->receipt = $response['receipt'];
+                        }
 
-//                    $receipt = explode("\n", $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->respostaAdquirente);
-//
-//                    $isPassword = (new PaygoClient())->getCardEntMode($receipt);
-//
-//                    dd($receipt, $isPassword);
+                        $payment->save();
 
-                    if ($payment->save() && $payment->status == "approved"){
-                        $payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
-                        $payment->receipt = $response['receipt'];
-//                        $receipt = $response['payment']->intencoesVendas[0]->pagamentosExternos[0];
-//                        $newReceipt = Functions::receiptFormat($receipt);
-//                        dd($response, $payment->receipt);
-
-                        //"CRIAR FUNÇÃO PARA TRATAR OS DADOS DO CUPOM"
-//                        $payment->receipt = [
-//                            'card_number' => null,
-//                            'flag' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->bandeira,
-//                            'card_ent_mode' => null,//approximation or password
-//                            'payer' => null,
-//                            'transaction_code' => null,
-//                            'receipt' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente
-//                        ];
+                        ProcessCallback::dispatch($payment);
                     }
-
-                    $payment->save();
-
-                    ProcessCallback::dispatch($payment);
-                }
-                else
-                {
-
-                    $this->proccessBillets();
-                    dd('TEf');
                 }
             }
 
@@ -335,11 +311,11 @@ class PaymentController extends Controller
                                 $payment->receipt = [
                                     'card_number' => $ecommercePayment['payment']->Payment->CreditCard->CardNumber,
                                     'flag' => $ecommercePayment['payment']->Payment->CreditCard->Brand,
-                                    'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
+                                    'card_ent_mode' => "TRANSAÇÃO AUTORIZADA COM SENHA",
                                     'payer' => $ecommercePayment['payment']->Payment->CreditCard->Holder,
                                     'in_installments' => $ecommercePayment['payment']->Payment->Installments,
                                     'transaction_code' => $ecommercePayment['payment']->Payment->AuthorizationCode,
-                                    'capture_date' => $ecommercePayment['payment']->Payment->CapturedDate,
+                                    'capture_date' => date("d/m/Y H:i", strtotime($ecommercePayment['payment']->Payment->CapturedDate)),
                                     'receipt' => null
                                 ];
                             }

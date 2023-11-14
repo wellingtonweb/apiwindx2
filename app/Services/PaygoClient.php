@@ -131,10 +131,9 @@ class PaygoClient
             return [
                 'status' => self::rewriteStatus($response->object()->intencoesVendas[0]->intencaoVendaStatus->id),
                 'payment' => $response->object(),
-                'receipt' => self::receiptFormat($response->object()->intencoesVendas[0]->pagamentosExternos[0])
+                'receipt' => self::receiptFormat($response->object()->intencoesVendas[0])
             ];
 
-//            return $response->object();
         }else{
             return $response->toException();
         }
@@ -171,7 +170,6 @@ class PaygoClient
         }
     }
 
-    //Enviar $paymentId
     public function cancelPayment($paymentId)
     {
 
@@ -214,20 +212,22 @@ class PaygoClient
         return $statusUpdated;
     }
 
-    public function receiptFormat($externalPayments)
+    public function receiptFormat($salesIntentions)
     {
-        if(empty($externalPayments)){
+        if(empty($salesIntentions)){
             return null;
         }
-        $arrayReceipt = explode("\n", $externalPayments->respostaAdquirente);
+        $arrayReceipt = explode("\n", $salesIntentions->pagamentosExternos[0]->respostaAdquirente);
 
         return [
             'card_number' => self::getCardNumber($arrayReceipt),
-            'flag' => $externalPayments->bandeira,
+            'flag' => $salesIntentions->pagamentosExternos[0]->bandeira,
             'card_ent_mode' => self::getCardEntMode($arrayReceipt)['with_password'],
             'payer' => self::getCardEntMode($arrayReceipt)['payer'],
-            'transaction_code' => $externalPayments->autorizacao,
-            'receipt_full' => $externalPayments->comprovanteAdquirente
+            'in_installments' => $salesIntentions->quantidadeParcelas,
+            'transaction_code' => $salesIntentions->pagamentosExternos[0]->autorizacao,
+            'capture_date' => $salesIntentions->dataAtualizacao,
+            'receipt_full' => $salesIntentions->pagamentosExternos[0]->comprovanteAdquirente
         ];
     }
 
