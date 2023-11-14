@@ -219,7 +219,7 @@ class PaygoClient
         if(empty($externalPayments)){
             return null;
         }
-        $arrayReceipt = explode("\n", $externalPayments->comprovanteAdquirente);
+        $arrayReceipt = explode("\n", $externalPayments->respostaAdquirente);
 
         return [
             'card_number' => self::getCardNumber($arrayReceipt),
@@ -231,15 +231,26 @@ class PaygoClient
         ];
     }
 
-    public function getCardEntMode($array) {
-        $isPassword = array_search("TRANSACAO AUTORIZADA COM SENHA", $array);
+    public function getCardEntMode($array)
+    {
+        $isPassword = false;
+        $payer = null;
+        foreach ($array as $key => $value) {
+            if($value === "PWINFO_CARDENTMODE = 4\r"){
+                $num = preg_replace('/[^[:alnum:]_]/', '',$value);
+                if($num <= 4){
+                    $isPassword = true;
+                }
+            };
+            if(trim($value) === "TRANSACAO AUTORIZADA COM SENHA"){
+                $payer = trim($array[$key +1]);
+            }
+        }
 
-        if ($isPassword !== false && isset($array[$isPassword + 1])) {
-            $payer = $array[$isPassword + 1];
-
+        if ($isPassword !== false) {
             return array('with_password' => "TRANSAÇÃO AUTORIZADA COM SENHA", 'payer' => $payer);
         } else {
-            return array('with_password' => "TRANSAÇÃO AUTORIZADA POR APROXIMAÇÃO", 'payer' => null);
+            return array('with_password' => "TRANSAÇÃO AUTORIZADA POR APROXIMAÇÃO", 'payer' => $payer);
         }
     }
 

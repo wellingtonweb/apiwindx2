@@ -276,9 +276,17 @@ class PaymentController extends Controller
 
                 $payment->status = $response['status'];
 
+//                dd($response['receipt'] );
+
                 if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
                 {
                     $payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
+
+//                    $receipt = explode("\n", $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->respostaAdquirente);
+//
+//                    $isPassword = (new PaygoClient())->getCardEntMode($receipt);
+//
+//                    dd($receipt, $isPassword);
 
                     if ($payment->save() && $payment->status == "approved"){
                         $payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
