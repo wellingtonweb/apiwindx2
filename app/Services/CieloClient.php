@@ -17,6 +17,8 @@ use App\Models\Payment;
 //use Cielo\API30\Ecommerce\Sale;
 //use Cielo\API30\Ecommerce\Payment as CieloPayment;
 //use Cielo\API30\Merchant;
+use Cielo\API30\Ecommerce\Environment;
+use Cielo\API30\Merchant;
 use Illuminate\Support\Facades\Http;
 
 class CieloClient
@@ -178,7 +180,9 @@ class CieloClient
             "MerchantKey" => $ev['merchantKey'],
         ])->get("{$ev['apiQueryUrl']}1/sales/{$transaction}");
 
-//        dd($response->object());
+//        dd($payment->object());
+
+//        return $payment;
 
         return [
             'status' => self::rewriteStatus($response->object()->Payment->Status),

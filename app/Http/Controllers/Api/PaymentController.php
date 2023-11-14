@@ -105,7 +105,8 @@ class PaymentController extends Controller
 //                            dd($payment, $ecommercePayment);
 
                         if ($payment->save() && $payment->status == "approved"){
-                            $payment->transaction = $ecommercePayment->object()->Payment->AuthorizationCode;
+//                            $payment->transaction = $ecommercePayment->object()->Payment->AuthorizationCode;
+                            $payment->transaction = $ecommercePayment->object()->Payment->PaymentId;
                             $payment->installment = $ecommercePayment->object()->Payment->Installments;
                             $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
                             $payment->receipt = [
@@ -267,12 +268,16 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-//        $response = CieloClient::getStatus($payment->transaction);
-//        dd($response);
+
+
+//        dd('Response: ', $response->object());
 
         if ($payment) {
-            if($payment->method === "tef"){
+            if($payment->method === "tef")
+            {
 //                $payment = Payments::tef($payment, $request->all());
+//                $response = CieloClient::getStatus($payment->transaction);
+
                 if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
                 {
                     $this->proccessBillets();
@@ -304,21 +309,12 @@ class PaymentController extends Controller
                 }
             }
 
-            if($payment->method === "ecommerce"){
-//                $payment = Payments::ecommerce($payment, $request->all());
+            if($payment->method === "ecommerce")
+            {
+                $ecommercePayment = CieloClient::getStatus($payment->transaction);
 
-                $ecommercePayment = null;
-//                    (object)$this->payment;
-
-                $cieloPayment = (new CieloClient($payment, $request));
-//        dd($payment->transaction);
-
-                $response = $cieloPayment->getStatus($payment->transaction);
-
-                dd($response);
-
-                if($response != null){
-                    $payment->status = $response['status'];
+                if($ecommercePayment != null){
+                    $payment->status = $ecommercePayment['status'];
 
                     if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
                     {
@@ -326,30 +322,28 @@ class PaymentController extends Controller
                         {
                             if ($payment->save() && $payment->status == "approved")
                             {
-                                $payment->transaction = $ecommercePayment->Payment->AuthorizationCode;
+                                $payment->transaction = $ecommercePayment['payment']->Payment->PaymentId;
                                 $payment->receipt = [
-                                    'card_number' => $ecommercePayment->Payment->CreditCard->CardNumber,
-                                    'flag' => $ecommercePayment->Payment->CreditCard->Brand,
+                                    'card_number' => $ecommercePayment['payment']->Payment->CreditCard->CardNumber,
+                                    'flag' => $ecommercePayment['payment']->Payment->CreditCard->Brand,
                                     'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
-                                    'payer' => $ecommercePayment->Payment->CreditCard->Holder,
-                                    'in_installments' => $ecommercePayment->Payment->Installments,
-                                    'transaction_code' => $ecommercePayment->Payment->PaymentId,
+                                    'payer' => $ecommercePayment['payment']->Payment->CreditCard->Holder,
+                                    'in_installments' => $ecommercePayment['payment']->Payment->Installments,
+                                    'transaction_code' => $ecommercePayment['payment']->Payment->AuthorizationCode,
                                     'receipt' => null
                                 ];
                             }
                         }
 
-                        $payment->save();
-                        self::proccessBillets();
+                        ProcessCallback::dispatch($payment);
                     }
+
+                    $payment->save();
                 }
-
-                return $payment;
-
             }
 
-            if($payment->method === "picpay"){
-//                $payment = Payments::picpay($payment, $request->all());
+            if($payment->method === "picpay")
+            {
                 $payment->status = (new PicpayClient($payment))->getStatus()->status;
 
                 if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
@@ -358,8 +352,6 @@ class PaymentController extends Controller
                 }
 
                 $payment->save();
-
-                return $payment;
             }
         }
 
