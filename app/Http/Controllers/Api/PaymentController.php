@@ -116,6 +116,7 @@ class PaymentController extends Controller
                                 'transaction_code' => $ecommercePayment->object()->Payment->PaymentId,
                                 'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
                                 'in_installments' => $ecommercePayment->object()->Payment->Installments,
+                                'capture_date' => $ecommercePayment->object()->Payment->CapturedDate,
                                 'receipt' => null
                             ];
                             $payment->save();
@@ -268,42 +269,42 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-
-
-//        dd('Response: ', $response->object());
-
         if ($payment) {
             if($payment->method === "tef")
             {
-//                $payment = Payments::tef($payment, $request->all());
-//                $response = CieloClient::getStatus($payment->transaction);
+                $response = (new PaygoClient())->getStatus($payment->reference);
+
+                $payment->status = $response['status'];
 
                 if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
                 {
-                    $this->proccessBillets();
+                    $payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
+
+                    if ($payment->save() && $payment->status == "approved"){
+                        $payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
+                        $payment->receipt = $response['receipt'];
+//                        $receipt = $response['payment']->intencoesVendas[0]->pagamentosExternos[0];
+//                        $newReceipt = Functions::receiptFormat($receipt);
+//                        dd($response, $payment->receipt);
+
+                        //"CRIAR FUNÇÃO PARA TRATAR OS DADOS DO CUPOM"
+//                        $payment->receipt = [
+//                            'card_number' => null,
+//                            'flag' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->bandeira,
+//                            'card_ent_mode' => null,//approximation or password
+//                            'payer' => null,
+//                            'transaction_code' => null,
+//                            'receipt' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente
+//                        ];
+                    }
+
+                    $payment->save();
+
+                    ProcessCallback::dispatch($payment);
                 }
                 else
                 {
-                    $response = (new PaygoClient())->getStatus($this->payment->reference);
-                    $this->payment->status = $response['status'];
-                    $this->payment->installment = $response['payment']->intencoesVendas[0]->quantidadeParcelas;
 
-                    if ($this->payment->save() && $this->payment->status == "approved"){
-                        $this->payment->transaction = $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->autorizacao;
-//                            $this->payment->customer_origin =
-
-                        //"CRIAR FUNÇÃO PARA TRATAR OS DADOS DO CUPOM"
-                        $this->payment->receipt = [
-                            'card_number' => null,
-                            'flag' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->bandeira,
-                            'card_ent_mode' => null,//approximation or password
-                            'payer' => null,
-                            'transaction_code' => null,
-                            'receipt' => $response['payment']->intencoesVendas[0]->pagamentosExternos[0]->comprovanteAdquirente
-                        ];
-                    }
-
-                    $this->payment->save();
                     $this->proccessBillets();
                     dd('TEf');
                 }
@@ -330,6 +331,7 @@ class PaymentController extends Controller
                                     'payer' => $ecommercePayment['payment']->Payment->CreditCard->Holder,
                                     'in_installments' => $ecommercePayment['payment']->Payment->Installments,
                                     'transaction_code' => $ecommercePayment['payment']->Payment->AuthorizationCode,
+                                    'capture_date' => $ecommercePayment['payment']->Payment->CapturedDate,
                                     'receipt' => null
                                 ];
                             }

@@ -18,12 +18,12 @@ class PaygoClient
     public function __construct()
     {
         if (getenv('APP_ENV') == 'local') {
-            $this->url = getenv('CONTROLPAY_SANDBOX_APIURL');
+            $this->url = getenv('CONTROLPAY_SANDBOX_API_URL');
             $this->login = getenv('CONTROLPAY_SANDBOX_LOGIN');
             $this->senha = getenv('CONTROLPAY_SANDBOX_PASSWORD');
             $this->senhaTecnica = getenv('CONTROLPAY_SANDBOX_TECHNICAL_PASSWORD');
         }else{
-            $this->url = getenv('CONTROLPAY_PROD_APIURL');
+            $this->url = getenv('CONTROLPAY_PROD_API_URL');
             $this->login = getenv('CONTROLPAY_PROD_LOGIN');
             $this->senha = getenv('CONTROLPAY_PROD_PASSWORD');
             $this->senhaTecnica = getenv('CONTROLPAY_PROD_TECHNICAL_PASSWORD');
@@ -131,6 +131,7 @@ class PaygoClient
             return [
                 'status' => self::rewriteStatus($response->object()->intencoesVendas[0]->intencaoVendaStatus->id),
                 'payment' => $response->object(),
+                'receipt' => self::receiptFormat($response->object()->intencoesVendas[0]->pagamentosExternos[0])
             ];
 
 //            return $response->object();
@@ -211,6 +212,47 @@ class PaygoClient
         }
 
         return $statusUpdated;
+    }
+
+    public function receiptFormat($externalPayments)
+    {
+        if(empty($externalPayments)){
+            return null;
+        }
+        $arrayReceipt = explode("\n", $externalPayments->comprovanteAdquirente);
+
+        return [
+            'card_number' => self::getCardNumber($arrayReceipt),
+            'flag' => $externalPayments->bandeira,
+            'card_ent_mode' => self::getCardEntMode($arrayReceipt)['with_password'],
+            'payer' => self::getCardEntMode($arrayReceipt)['payer'],
+            'transaction_code' => $externalPayments->autorizacao,
+            'receipt_full' => $externalPayments->comprovanteAdquirente
+        ];
+    }
+
+    public function getCardEntMode($array) {
+        $isPassword = array_search("TRANSACAO AUTORIZADA COM SENHA", $array);
+
+        if ($isPassword !== false && isset($array[$isPassword + 1])) {
+            $payer = $array[$isPassword + 1];
+
+            return array('with_password' => "TRANSAÇÃO AUTORIZADA COM SENHA", 'payer' => $payer);
+        } else {
+            return array('with_password' => "TRANSAÇÃO AUTORIZADA POR APROXIMAÇÃO", 'payer' => null);
+        }
+    }
+
+    public function getCardNumber($array) {
+        $cardFormat = '/\d{6}\*{6}\d{4}/';
+
+        foreach ($array as $item) {
+            if (preg_match($cardFormat, $item, $matches)) {
+                return $matches[0];
+            }
+        }
+
+        return null;
     }
 
 }
