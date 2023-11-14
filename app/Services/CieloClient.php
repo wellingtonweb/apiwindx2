@@ -183,10 +183,12 @@ class CieloClient
 //        dd($payment->object());
 
 //        return $payment;
+        $typePayment = $response->object()->Payment->Type;
 
         return [
             'status' => self::rewriteStatus($response->object()->Payment->Status),
             'payment' => $response->object(),
+            'receipt' => ($typePayment != "Pix") ? self::receiptFormat($response->object()) : null
         ];
     }
 
@@ -226,6 +228,27 @@ class CieloClient
         ])->put("{$ev['apiUrl']}1/sales/{$paymentId}/void?amount={$amount}");
 
         return $response->object();
+    }
+
+    public function receiptFormat($receipt)
+    {
+        $receiptFormatted = null;
+
+        if(!empty($receipt))
+        {
+            $receiptFormatted = [
+                'card_number' => $receipt->Payment->CreditCard->CardNumber,
+                'flag' => strtoupper($receipt->Payment->CreditCard->Brand),
+                'card_ent_mode' => "TRANSAÇÃO AUTORIZADA COM SENHA",
+                'payer' => strtoupper($receipt->Payment->CreditCard->Holder),
+                'in_installments' => $receipt->Payment->Installments,
+                'transaction_code' => $receipt->Payment->AuthorizationCode,
+                'capture_date' => date("d/m/Y H:i", strtotime($receipt->Payment->CapturedDate)),
+                'receipt' => null
+            ];
+        }
+
+        return $receiptFormatted;
     }
 
     private function pay()

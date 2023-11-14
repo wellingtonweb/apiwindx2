@@ -91,6 +91,8 @@ class PaymentController extends Controller
                     {
                         $ecommercePayment = $cieloPayment->credit();
 
+//                        dd($ecommercePayment);
+
                         if($ecommercePayment->failed()){
 //                            return new PaymentResource([
 //                                'message' => $ecommercePayment->body()
@@ -110,19 +112,21 @@ class PaymentController extends Controller
                             $payment->transaction = $ecommercePayment->object()->Payment->PaymentId;
                             $payment->installment = $ecommercePayment->object()->Payment->Installments;
                             $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
-                            $payment->receipt = [
-                                'card_number' => $ecommercePayment->object()->Payment->CreditCard->CardNumber,
-                                'payer' => $ecommercePayment->object()->Payment->CreditCard->Holder,
-                                'flag' => $ecommercePayment->object()->Payment->CreditCard->Brand,
-                                'transaction_code' => $ecommercePayment->object()->Payment->PaymentId,
-                                'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
-                                'in_installments' => $ecommercePayment->object()->Payment->Installments,
-                                'capture_date' => $ecommercePayment->object()->Payment->CapturedDate,
-                                'receipt' => null
-                            ];
+                            $payment->receipt = CieloClient::receiptFormat($ecommercePayment->object());
+
+//                            $payment->receipt = [
+//                                'card_number' => $ecommercePayment->object()->Payment->CreditCard->CardNumber,
+//                                'payer' => $ecommercePayment->object()->Payment->CreditCard->Holder,
+//                                'flag' => $ecommercePayment->object()->Payment->CreditCard->Brand,
+//                                'transaction_code' => $ecommercePayment->object()->Payment->PaymentId,
+//                                'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
+//                                'in_installments' => $ecommercePayment->object()->Payment->Installments,
+//                                'capture_date' => $ecommercePayment->object()->Payment->CapturedDate,
+//                                'receipt' => null
+//                            ];
                             $payment->save();
 
-                            ProcessCallback::dispatch($payment);
+//                            ProcessCallback::dispatch($payment);
                         }else{
                             $payment->installment = $ecommercePayment->Payment->Installments;
                             $payment->save();
@@ -300,6 +304,7 @@ class PaymentController extends Controller
 
                 if($ecommercePayment != null){
                     $payment->status = $ecommercePayment['status'];
+//                    dd($ecommercePayment['payment']);
 
                     if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
                     {
@@ -308,16 +313,7 @@ class PaymentController extends Controller
                             if ($payment->save() && $payment->status == "approved")
                             {
                                 $payment->transaction = $ecommercePayment['payment']->Payment->PaymentId;
-                                $payment->receipt = [
-                                    'card_number' => $ecommercePayment['payment']->Payment->CreditCard->CardNumber,
-                                    'flag' => $ecommercePayment['payment']->Payment->CreditCard->Brand,
-                                    'card_ent_mode' => "TRANSAÇÃO AUTORIZADA COM SENHA",
-                                    'payer' => $ecommercePayment['payment']->Payment->CreditCard->Holder,
-                                    'in_installments' => $ecommercePayment['payment']->Payment->Installments,
-                                    'transaction_code' => $ecommercePayment['payment']->Payment->AuthorizationCode,
-                                    'capture_date' => date("d/m/Y H:i", strtotime($ecommercePayment['payment']->Payment->CapturedDate)),
-                                    'receipt' => null
-                                ];
+                                $payment->receipt = $ecommercePayment['receipt'];
                             }
                         }
 
