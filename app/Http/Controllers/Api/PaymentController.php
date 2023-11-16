@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\Functions;
 use App\Helpers\Payments;
+use App\Helpers\WorkingDays;
 use App\Jobs\CouponMailPDF;
 use App\Jobs\FindPaymentsPending;
 use App\Jobs\ProcessBillets;
@@ -60,19 +61,31 @@ class PaymentController extends Controller
 
         $validated = $request->validated();
 
-//        dd(json_decode($request->customer_origin, true));
+        $customer_origin = null;
+
+        if(json_decode($request->customer_origin)[0]->origin != null){
+            $customer_origin = json_decode($request->customer_origin)[0]->origin;
+        }
 
         $billetIsPay = [];
 
         $validated['amount'] = 0;
+        $validated['fees'] = false;
+
         foreach ($validated['billets'] as $billet) {
-            $billet->total = (($billet->value + $billet->addition) - $billet->discount);
+            $validated['fees'] = WorkingDays::isHolidayOrWeekend($billet->duedate);
+            if($validated['fees']){
+                $billet->total = $billet->value;
+            }else{
+                $billet->total = (($billet->value + $billet->addition) - $billet->discount);
+            }
+
             $validated['amount'] = $validated['amount'] + $billet->total;
             $validated['reference'] = (Str::uuid())->toString();
             $billetIsPay = (new VigoClient())->billetIsPay($validated['customer'], $billet->billet_id);
         }
 
-//        dd(count($billetIsPay['billets']));
+        dd($validated);
 
         if(count($billetIsPay['billets']) === 0){
             $payment = (Payment::create($validated))->load('terminal');
@@ -113,27 +126,17 @@ class PaymentController extends Controller
                             $payment->installment = $ecommercePayment->object()->Payment->Installments;
                             $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
                             $payment->receipt = CieloClient::receiptFormat($ecommercePayment->object());
-
-//                            $payment->receipt = [
-//                                'card_number' => $ecommercePayment->object()->Payment->CreditCard->CardNumber,
-//                                'payer' => $ecommercePayment->object()->Payment->CreditCard->Holder,
-//                                'flag' => $ecommercePayment->object()->Payment->CreditCard->Brand,
-//                                'transaction_code' => $ecommercePayment->object()->Payment->PaymentId,
-//                                'card_ent_mode' => "TRANSACAO AUTORIZADA COM SENHA",//approximation or password -> criar função
-//                                'in_installments' => $ecommercePayment->object()->Payment->Installments,
-//                                'capture_date' => $ecommercePayment->object()->Payment->CapturedDate,
-//                                'receipt' => null
-//                            ];
                             $payment->save();
 
-//                            ProcessCallback::dispatch($payment);
+                            ProcessCallback::dispatch($payment);
                         }else{
                             $payment->installment = $ecommercePayment->Payment->Installments;
                             $payment->save();
-                            ProcessCallback::dispatch($payment);
+//                            ProcessCallback::dispatch($payment);
                         }
                     }
-                    elseif($payment->payment_type === 'debit')
+
+                    if($payment->payment_type === 'debit')
                     {
                         dd('Função Débito desabilitada temporariamente!');
                         $ecommercePayment = $cieloPayment->debit();
@@ -157,10 +160,13 @@ class PaymentController extends Controller
                             ProcessCallback::dispatch($payment);
                         }
                     }
-                    else
+
+                    if($payment->payment_type === 'pix')
                     {
-//                        $ecommercePayment = $cieloPayment->pix();
-                        $ecommercePayment = (new CieloClient())->pix($payment, $validated);
+                        $ecommercePayment = $cieloPayment->pix();
+
+//                        dd($ecommercePayment);
+//                        $ecommercePayment = (new CieloClient())->pix($payment, $validated);
 
                         if($ecommercePayment->Payment->Status === 12){
                             $payment->transaction = $ecommercePayment->Payment->PaymentId;

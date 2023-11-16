@@ -111,7 +111,6 @@ class CieloClient
 //                "InitiatedTransactionIndicator" => $initTransInd
             ]
         ]);
-//        dd($response);
 
         return $response;
     }
@@ -137,31 +136,31 @@ class CieloClient
         return $this->pay();
     }
 
-    public function pix(Payment $order, array $paymentData)
+    public function pix()
     {
         $ev = self::credentials();
-        $this->paymentData = (object) $paymentData;
+//        $this->paymentData = (object) $paymentData;
 
 //        dd($ev, $this->paymentData);
 
-        $identityType = preg_replace('/[^0-9]/', '', $paymentData->buyer['cpf_cnpj']);
+        $identityType = preg_replace('/[^0-9]/', '', $this->paymentData->buyer['cpf_cnpj']);
 
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
             "MerchantId" => $ev['merchantId'],
             "MerchantKey" => $ev['merchantKey'],
-            'RequestId' => $paymentData->reference
+            'RequestId' => $this->paymentData->reference
 
         ])->post("https://api.cieloecommerce.cielo.com.br/1/sales/", [
-            "MerchantOrderId" => $order->reference,
+            "MerchantOrderId" => $this->order->reference,
             "Customer" => [
-                "Name" => "{$paymentData->buyer['first_name']} {$paymentData->buyer['last_name']}",
-                "Identity" => $paymentData->buyer['cpf_cnpj'],
+                "Name" => "{$this->paymentData->buyer['first_name']} {$this->paymentData->buyer['last_name']}",
+                "Identity" => $this->paymentData->buyer['cpf_cnpj'],
                 "IdentityType" => strlen($identityType) == 11 ? 'CPF' : 'CNPJ'
             ],
             "Payment" => [
                 "Type" => "Pix",
-                "Amount" => $order->amount * 100
+                "Amount" => $this->order->amount * 100
             ]
         ]);
 
@@ -173,16 +172,12 @@ class CieloClient
     {
         $ev = self::credentials();
 
-//        dd($ev, $transaction);
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
             "MerchantId" => $ev['merchantId'],
             "MerchantKey" => $ev['merchantKey'],
         ])->get("{$ev['apiQueryUrl']}1/sales/{$transaction}");
 
-//        dd($payment->object());
-
-//        return $payment;
         $typePayment = $response->object()->Payment->Type;
 
         return [
