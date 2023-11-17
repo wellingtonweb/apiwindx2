@@ -61,6 +61,8 @@ class PaymentController extends Controller
 
         $validated = $request->validated();
 
+        dd((new VigoClient())->release($request->customer));
+
 //        $customer_origin = null;
 //
 //        if(json_decode($request->customer_origin)[0]->origin != null){

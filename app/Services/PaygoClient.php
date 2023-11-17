@@ -18,16 +18,16 @@ class PaygoClient
     public function __construct()
     {
         if (getenv('APP_ENV') == 'local') {
-            $this->url = getenv('CONTROLPAY_SANDBOX_API_URL');
-            $this->login = getenv('CONTROLPAY_SANDBOX_LOGIN');
-            $this->senha = getenv('CONTROLPAY_SANDBOX_PASSWORD');
-            $this->senhaTecnica = getenv('CONTROLPAY_SANDBOX_TECHNICAL_PASSWORD');
+            $this->url = config('services.controlpay.sandbox.api_url');
+            $this->login = config('services.controlpay.sandbox.api_login');
+            $this->senha = config('services.controlpay.sandbox.api_password');
+            $this->senhaTecnica = config('services.controlpay.sandbox.api_technical_password');
         }else{
-            $this->url = getenv('CONTROLPAY_PROD_API_URL');
-            $this->login = getenv('CONTROLPAY_PROD_LOGIN');
-            $this->senha = getenv('CONTROLPAY_PROD_PASSWORD');
-            $this->senhaTecnica = getenv('CONTROLPAY_PROD_TECHNICAL_PASSWORD');
-            $this->key = getenv('CONTROLPAY_PROD_KEY');
+            $this->url = config('services.controlpay.production.api_url');
+            $this->login = config('services.controlpay.production.api_login');
+            $this->senha = config('services.controlpay.production.api_password');
+            $this->senhaTecnica = config('services.controlpay.production.api_technical_password');
+            $this->key = config('services.controlpay.production.api_key');
         }
 
 //        $response = Http::withHeaders([

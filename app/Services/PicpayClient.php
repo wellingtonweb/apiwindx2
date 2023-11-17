@@ -15,15 +15,10 @@ class PicpayClient
 
     public function __construct(Payment $payment)
     {
-//        $this->apiUrl = getenv("PICPAY_PROD_URL");
-//        $this->callbackUrl = getenv("PICPAY_PROD_URL_CALLBACK");
-//        $this->picpayToken = getenv("PICPAY_TOKEN_PROD");
-//        $this->sellerToken = getenv("PICPAY_SELLER_PROD");
         $this->apiUrl = config('services.picpay.production.api_url');
         $this->callbackUrl = config('services.picpay.production.api_url_callback');
         $this->picpayToken = config('services.picpay.production.api_token');
         $this->sellerToken = config('services.picpay.production.api_seller');
-
         $this->payment = $payment;
     }
 

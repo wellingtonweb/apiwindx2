@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class VigoClient
 {
@@ -30,16 +31,29 @@ class VigoClient
     public function __construct()
     {
         if (getenv('APP_ENV') == 'local') {
-            $this->apiUrl = getenv('VIGO_SANDBOX_API_URL');
-            $this->login = getenv('VIGO_SANDBOX_LOGIN');
-            $this->password = getenv('VIGO_SANDBOX_PASSWORD');
-            $this->caixa = getenv('VIGO_SANDBOX_CAIXA');
-        } else {
-            $this->apiUrl = getenv('VIGO_PROD_API_URL');
-            $this->login = getenv('VIGO_PROD_LOGIN');
-            $this->password = getenv('VIGO_PROD_PASSWORD');
-            $this->caixa = getenv('VIGO_PROD_CAIXA_CARTAO');
+//            config('services.picpay.production.api_url')
+
+            $this->apiUrl = config('services.vigo.sandbox.api_url');
+            $this->login = config('services.vigo.sandbox.api_login');
+            $this->password = config('services.vigo.sandbox.api_password');
+            $this->caixa = config('services.vigo.sandbox.api_caixa');
+//            $this->apiUrl = getenv('VIGO_SANDBOX_API_URsandboxL');
+//            $this->login = getenv('VIGO_SANDBOX_LOGIN');
+//            $this->password = getenv('VIGO_SANDBOX_PASSWORD');
+//            $this->caixa = getenv('VIGO_SANDBOX_CAIXA');
+        }else{
+            $this->apiUrl = config('services.vigo.production.api_url');
+            $this->login = config('services.vigo.production.api_login');
+            $this->password = config('services.vigo.production.api_password');
+            $this->caixa = config('services.vigo.production.api_caixa_picpay');
+
+//            $this->apiUrl = getenv('VIGO_PROD_API_URL');
+//            $this->login = getenv('VIGO_PROD_LOGIN');
+//            $this->password = getenv('VIGO_PROD_PASSWORD');
+//            $this->caixa = getenv('VIGO_PROD_CAIXA_CARTAO');
         }
+
+
 
 //        dd($this->apiUrl, $this->login, $this->password, $this->caixa);
 
@@ -172,6 +186,48 @@ class VigoClient
         return $billets;
     }
 
+    public function release(int $idCustomer)
+    {
+        $idCustomer = 38524;
+        $hasPending = false;
+        $documentCustomer = "";
+        $billets = [];
+        $response = json_decode(Http::accept('application/json')
+            ->withToken($this->token)
+            ->post("{$this->apiUrl}/api/app_getboletosid", ["id" => "{$idCustomer}"])->body());
+
+        $response = json_decode($response);
+
+        foreach ($response as $key => $billet) {
+            $pay = Carbon::parse($billet->Vencimento);
+            $today = Carbon::now()->startOfDay();
+            $documentCustomer = $billet->CpfCgc;
+
+            if ($billet->Pago == 0 && $pay <= $today) {
+                $hasPending = true;
+                array_push($billets, $billet);
+            }
+        }
+
+        if(!$hasPending)
+        {
+            $response = Http::accept('application/json')
+                ->withToken($this->token)
+                ->post($this->apiUrl . "/api/app_liberacomid", [
+                    "cpf_cnpj" => str_replace(['/', '-', '.'], '', $documentCustomer),
+                    "id" => "{$idCustomer}"
+                ]);
+
+            if ($response->successful() && $response->object() === "OK") {
+                return response()->json('unlocked');
+            } else {
+                return response()->json($response->object());
+            }
+        }
+
+        return response()->json('pending');
+    }
+
     public function central(string $login, string $password)
     {
         $response = Http::accept('application/json')
@@ -240,6 +296,8 @@ class VigoClient
         if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
         {
             Log::alert(json_encode($response->status() . ' - ('.$billet->billet_id.')' . $response->object()));
+
+            self::release($payment->customer);
 
             CouponMailPDF::dispatch($payment->paymentId);
 
@@ -512,6 +570,7 @@ class VigoClient
 
         return $resp;
     }
+
 
 
 }

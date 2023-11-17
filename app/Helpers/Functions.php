@@ -8,21 +8,6 @@ use DateTime;
 
 class Functions
 {
-
-
-
-    //    public function getCardEntMode($receipt)
-//    {
-//        $resp = strpos($receipt, "TRANSACAO AUTORIZADA COM SENHA");
-//
-//        if ($resp === false) {
-//            return false;
-//        }
-//
-//        return true;
-//    }
-
-
     public function getDateTimeFull()
     {
         setlocale(LC_ALL, 'pt_BR', 'pt_BR.utf-8', 'pt_BR.utf-8', 'portuguese');
