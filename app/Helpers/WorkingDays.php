@@ -30,35 +30,25 @@ class WorkingDays
         return false;
     }
 
-    public static function isHolidayOrWeekend($dateInput)
+    public static function hasFees($dueDate)
     {
-        $holiday = self::isHoliday($dateInput);
+        $pay = Carbon::parse($dueDate);
+        $today = Carbon::now()->startOfDay();
 
-        $pay = Carbon::parse($dateInput);
-
-//        $today = new Carbon();
-        $today = Carbon::parse('2023-11-17T00:00:00');
-
-        if($holiday){
-            if($today >= $pay){
-                //Considera final de semana para não cobrar juros
-                if($today <= $pay->addDay()->nextWeekday()){
-//                if($today <= $pay->addDay()){
-                    return true;
-                }else{
-                    return false;
-                }
-            }else{
-                return false;
-            }
-        }elseif($pay->isWeekend()) {
-            if($today <= $pay->nextWeekday()) {
-                return true;
-            }else{
-                return false;
-            }
-        } else {
-            return false;
+        if ($pay->isFriday() && $today >= $pay->addDays(4)) {
+            return true;
         }
+
+        $isHoliday = self::isHoliday($dueDate);
+
+        if ($isHoliday && ($pay->isWeekend() || $today > $pay->addDay())) {
+            return true;
+        }
+
+        if ($pay->isWeekend() && ($today >= $pay->next(Carbon::THURSDAY) || $today > $pay->addDay())) {
+            return true;
+        }
+
+        return false;
     }
 }

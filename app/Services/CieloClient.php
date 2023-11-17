@@ -42,6 +42,35 @@ class CieloClient
     {
         $this->order = $order;
         $this->paymentData = (object) $paymentData;
+
+        if (getenv('APP_ENV') == 'local') {
+            $this->merchantId = config('services.cielo.sandbox.api_merchant_id');
+            $this->merchantKey = config('services.cielo.sandbox.api_merchant_key');
+            $this->apiUrl = config('services.cielo.sandbox.api_url');
+            $this->apiQueryUrl = config('services.cielo.sandbox.api_query_url');
+
+//            $ev = [
+//                'merchantId' => config('services.cielo.sandbox.api_merchant_id'),
+//                'merchantKey' => config('services.cielo.sandbox.api_merchant_key'),
+//                'apiUrl' => config('services.cielo.sandbox.api_url'),
+//                'apiQueryUrl' => config('services.cielo.sandbox.api_query_url'),
+//            ] ;
+        } else {
+            $this->merchantId = config('services.cielo.production.api_merchant_id');
+            $this->merchantKey = config('services.cielo.production.api_merchant_key');
+            $this->apiUrl = config('services.cielo.production.api_url');
+            $this->apiQueryUrl = config('services.cielo.production.api_query_url');
+
+//            $ev = [
+//                'merchantId' => config('services.cielo.production.api_merchant_id'),
+//                'merchantKey' => config('services.cielo.production.api_merchant_key'),
+//                'apiUrl' => config('services.cielo.production.api_url'),
+//                'apiQueryUrl' => config('services.cielo.production.api_query_url'),
+//            ] ;
+        }
+
+//        dd($this->merchantId, $this->merchantKey, $this->apiUrl, $this->apiQueryUrl);
+
     }
 
     public function credentials()
@@ -68,8 +97,6 @@ class CieloClient
     public function credit()
     {
         $ev = self::credentials();
-//        $this->paymentData = (object) $paymentData;
-//        dd($ev);
 
 //        $initTransInd = [
 //            'Category' => null,
@@ -85,12 +112,14 @@ class CieloClient
 //            }
 //        }
 
+
+
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
-            "MerchantId" => $ev['merchantId'],
-            "MerchantKey" => $ev['merchantKey'],
+            "MerchantId" => $this->merchantId,
+            "MerchantKey" => $this->merchantKey,
             "RequestId" => $this->paymentData->reference
-        ])->post("{$ev['apiUrl']}1/sales/", [
+        ])->post("{$this->apiUrl}1/sales/", [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
                 "Name" => $this->paymentData->card['holder_name'],
@@ -117,7 +146,9 @@ class CieloClient
 
     public function debit(Payment $order, array $paymentData)
     {
-        $ev = self::credentials();
+//        $ev = self::credentials();
+
+//        dd($this->merchantId, $this->merchantKey, $this->apiUrl, $this->apiQueryUrl);
 
 //        $this->sale->customer($this->paymentData->card['holder_name']);
 //        $this->payment = $this->sale
@@ -138,20 +169,18 @@ class CieloClient
 
     public function pix()
     {
-        $ev = self::credentials();
-//        $this->paymentData = (object) $paymentData;
-
-//        dd($ev, $this->paymentData);
+//        $ev = self::credentials();
+//        dd($this->merchantId, $this->merchantKey, $this->apiUrl, $this->apiQueryUrl);
 
         $identityType = preg_replace('/[^0-9]/', '', $this->paymentData->buyer['cpf_cnpj']);
 
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
-            "MerchantId" => $ev['merchantId'],
-            "MerchantKey" => $ev['merchantKey'],
+            "MerchantId" => $this->merchantId,
+            "MerchantKey" => $this->merchantKey,
             'RequestId' => $this->paymentData->reference
 
-        ])->post("https://api.cieloecommerce.cielo.com.br/1/sales/", [
+        ])->post($this->apiUrl, [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
                 "Name" => "{$this->paymentData->buyer['first_name']} {$this->paymentData->buyer['last_name']}",
@@ -164,19 +193,19 @@ class CieloClient
             ]
         ]);
 
-//        dd($response->body());
         return $response->object();
     }
 
     public function getStatus($transaction)
     {
-        $ev = self::credentials();
+//        $ev = self::credentials();
+//        dd($this->merchantId, $this->merchantKey, $this->apiUrl, $this->apiQueryUrl);
 
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
-            "MerchantId" => $ev['merchantId'],
-            "MerchantKey" => $ev['merchantKey'],
-        ])->get("{$ev['apiQueryUrl']}1/sales/{$transaction}");
+            "MerchantId" => $this->merchantId,
+            "MerchantKey" => $this->merchantKey,
+        ])->get("{$this->apiQueryUrl}1/sales/{$transaction}");
 
         $typePayment = $response->object()->Payment->Type;
 
@@ -213,14 +242,16 @@ class CieloClient
     {
         return'Cancelamento';
 
-        $ev = self::credentials();
+//        $ev = self::credentials();
+
+//        dd($this->merchantId, $this->merchantKey, $this->apiUrl, $this->apiQueryUrl);
 
 //        dd($ev, $transaction);
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
-            "MerchantId" => $ev['merchantId'],
-            "MerchantKey" => $ev['merchantKey'],
-        ])->put("{$ev['apiUrl']}1/sales/{$paymentId}/void?amount={$amount}");
+            "MerchantId" => $this->merchantId,
+            "MerchantKey" => $this->merchantKey,
+        ])->put("{$this->apiUrl}1/sales/{$paymentId}/void?amount={$amount}");
 
         return $response->object();
     }
@@ -246,14 +277,14 @@ class CieloClient
         return $receiptFormatted;
     }
 
-    private function pay()
-    {
-//        $this->sale = (new CieloEcommerce($this->merchant, $this->environment))->createSale($this->sale);
-//        $response = $this->sale->getPayment();
-
-        dd('Teste: ',$response);
-
-        return $response;
-    }
+//    private function pay()
+//    {
+////        $this->sale = (new CieloEcommerce($this->merchant, $this->environment))->createSale($this->sale);
+////        $response = $this->sale->getPayment();
+//
+//        dd('Teste: ',$response);
+//
+//        return $response;
+//    }
 
 }

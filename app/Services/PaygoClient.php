@@ -58,32 +58,6 @@ class PaygoClient
         }
     }
 
-//    public function pay(Payment $payment)
-//    {
-//        $response = Http::withHeaders([
-//            "Content-Type" => "application/json"
-//        ])->post("{$this->url}/Venda/Vender/?key={$this->key}", [
-//            "formaPagamentoId" => ($payment->payment_type === "credit") ? 21 : 22,
-//            "terminalId" => $payment['terminal']->paygo_id,
-//            "referencia" => $payment->reference,
-//            "iniciarTransacaoAutomaticamente" => true,
-//            "parcelamentoAdmin" => null,
-//            "quantidadeParcelas" => 1,
-//            "adquirente" => "",
-//            "valorTotalVendido" => $payment->amount
-//        ]);
-//
-//        if($response->successful()){
-//            $payment->token = $response->object()->intencaoVenda->token;
-//
-//            $payment->save();
-//            return $payment;
-//        }else{
-//            return $response->toException();
-//        }
-//    }
-
-    //Implementação do parcelamento
     public function pay(Payment $payment)
     {
         if(isset($payment['billets'][0]->installment)){

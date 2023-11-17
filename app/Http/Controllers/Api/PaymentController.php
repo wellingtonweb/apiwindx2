@@ -61,11 +61,11 @@ class PaymentController extends Controller
 
         $validated = $request->validated();
 
-        $customer_origin = null;
-
-        if(json_decode($request->customer_origin)[0]->origin != null){
-            $customer_origin = json_decode($request->customer_origin)[0]->origin;
-        }
+//        $customer_origin = null;
+//
+//        if(json_decode($request->customer_origin)[0]->origin != null){
+//            $customer_origin = json_decode($request->customer_origin)[0]->origin;
+//        }
 
         $billetIsPay = [];
 
@@ -73,19 +73,17 @@ class PaymentController extends Controller
         $validated['fees'] = false;
 
         foreach ($validated['billets'] as $billet) {
-            $validated['fees'] = WorkingDays::isHolidayOrWeekend($billet->duedate);
+            $validated['fees'] = WorkingDays::hasFees($billet->duedate);
             if($validated['fees']){
-                $billet->total = $billet->value;
-            }else{
                 $billet->total = (($billet->value + $billet->addition) - $billet->discount);
+            }else{
+                $billet->total = $billet->value;
             }
 
             $validated['amount'] = $validated['amount'] + $billet->total;
             $validated['reference'] = (Str::uuid())->toString();
             $billetIsPay = (new VigoClient())->billetIsPay($validated['customer'], $billet->billet_id);
         }
-
-        dd($validated);
 
         if(count($billetIsPay['billets']) === 0){
             $payment = (Payment::create($validated))->load('terminal');
