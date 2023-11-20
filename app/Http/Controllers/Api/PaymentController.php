@@ -211,66 +211,6 @@ class PaymentController extends Controller
 //        return new PaymentResource($payment);
     }
 
-    public function revertPayment(Payment $payment)
-    {
-        if($payment){
-            ProcessRevertPayment::dispatch($payment);
-        }
-    }
-
-    public function cancelPayment(Payment $payment)
-    {
-//        dd($payment->method);
-
-        if($payment){
-
-            $response = null;
-
-            switch ($payment->method){
-                case 'ecommerce':
-                    $paymentId = $payment->transaction;
-//                    $paymentId = "153d7927-d443-4999-ba86-99f16b23ed0c";//pix 1,00 teste
-//                    $paymentId = "1a35ae17-7898-4209-811f-63a153e201d5";//pix do cliente
-                    $paymentAmount = $payment->amount * 100;
-//                    $paymentAmount = 1.00 * 100;
-
-//                    $ev = [
-//                        'merchantId' => config('services.cielo.production.api_merchant_id'),
-//                        'merchantKey' => config('services.cielo.production.api_merchant_key'),
-//                        'apiUrl' => config('services.cielo.production.api_url'),
-//                        'apiQueryUrl' => config('services.cielo.production.api_query_url'),
-//                    ] ;
-
-                    $ev = [
-                        'merchantId' => config('services.cielo.sandbox.api_merchant_id'),
-                        'merchantKey' => config('services.cielo.sandbox.api_merchant_key'),
-                        'apiUrl' => config('services.cielo.sandbox.api_url'),
-                        'apiQueryUrl' => config('services.cielo.sandbox.api_query_url'),
-                    ] ;
-
-//                    dd($ev['apiUrl']."1/sales/{$paymentId}/void?amount=".$paymentAmount, $ev);
-
-                    $response = Http::withHeaders([
-                        "Content-Type" => "application/json",
-                        "MerchantId" => $ev['merchantId'],
-                        "MerchantKey" => $ev['merchantKey'],
-                    ])->put($ev['apiUrl']."1/sales/{".$paymentId."}/void?amount=".$paymentAmount);
-
-                    break;
-                case 'tef':
-                    //2
-                    break;
-                case 'picpay':
-                    //3
-                    break;
-            }
-
-
-            return collect($response->body());
-
-        }
-    }
-
     /**
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Payment  $payment
@@ -381,6 +321,66 @@ class PaymentController extends Controller
 
         return response()->json('E-mail enviado com sucesso!');
 
+    }
+
+    public function revertPayment(Payment $payment)
+    {
+        if($payment){
+            ProcessRevertPayment::dispatch($payment);
+        }
+    }
+
+    public function cancelPayment(Payment $payment)
+    {
+//        dd($payment->method);
+
+        if($payment){
+
+            $response = null;
+
+            switch ($payment->method){
+                case 'ecommerce':
+                    $paymentId = $payment->transaction;
+//                    $paymentId = "153d7927-d443-4999-ba86-99f16b23ed0c";//pix 1,00 teste
+//                    $paymentId = "1a35ae17-7898-4209-811f-63a153e201d5";//pix do cliente
+                    $paymentAmount = $payment->amount * 100;
+//                    $paymentAmount = 1.00 * 100;
+
+//                    $ev = [
+//                        'merchantId' => config('services.cielo.production.api_merchant_id'),
+//                        'merchantKey' => config('services.cielo.production.api_merchant_key'),
+//                        'apiUrl' => config('services.cielo.production.api_url'),
+//                        'apiQueryUrl' => config('services.cielo.production.api_query_url'),
+//                    ] ;
+
+                    $ev = [
+                        'merchantId' => config('services.cielo.sandbox.api_merchant_id'),
+                        'merchantKey' => config('services.cielo.sandbox.api_merchant_key'),
+                        'apiUrl' => config('services.cielo.sandbox.api_url'),
+                        'apiQueryUrl' => config('services.cielo.sandbox.api_query_url'),
+                    ] ;
+
+//                    dd($ev['apiUrl']."1/sales/{$paymentId}/void?amount=".$paymentAmount, $ev);
+
+                    $response = Http::withHeaders([
+                        "Content-Type" => "application/json",
+                        "MerchantId" => $ev['merchantId'],
+                        "MerchantKey" => $ev['merchantKey'],
+                    ])->put($ev['apiUrl']."1/sales/{".$paymentId."}/void?amount=".$paymentAmount);
+
+                    break;
+                case 'tef':
+                    //2
+                    break;
+                case 'picpay':
+                    //3
+                    break;
+            }
+
+
+            return collect($response->body());
+
+        }
     }
 
 }

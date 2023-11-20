@@ -157,7 +157,7 @@ class ProcessCallback implements ShouldQueue
 //
 //            }
 
-            if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
+            if (Str::contains($this->payment->status, ['approved'])) {
                 $action = ($this->payment->status === "approved") ? true : false;
 
                 $paymentDataSlim = [
@@ -188,7 +188,8 @@ class ProcessCallback implements ShouldQueue
 
     public function proccessBillets(){
 //        dd('Status process: '.$this->payment->status);
-        if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
+        if (Str::contains($this->payment->status, ['approved'])) {
+//        if (Str::contains($this->payment->status, ['approved', 'canceled','chargeback'])) {
             $action = ($this->payment->status === "approved") ? true : false;
 
             $paymentDataSlim = [
