@@ -242,7 +242,9 @@ class VigoClient
 
             ]);
 
-        if ($response->successful()) {
+//        dd($response->object());
+
+        if ($response->successful() && $response->object() != "ERRO") {
             $customers = $response->object();
 
             $this->customer = (object)[
@@ -266,8 +268,11 @@ class VigoClient
                 "invoices" => $this->getInvoices($customers->id, $customers->cpfcgc),
                 "billets" => $this->getBillets($customers->id)
             ];
+        }else{
+            $this->customer = $response->object();
         }
         return $this;
+//        return $response->object();
     }
 
     public function checkoutBillet($billet, $payment)
@@ -282,6 +287,9 @@ class VigoClient
             'billet' => $billet,
             'caixa' => $caixa,
         ];
+
+        //Testando validação do cartão de crédito
+        return 'OK - BOLETO LIQUIDADO COM SUCESSO';
 
         $response = Http::accept('application/json')
             ->withToken($this->token)

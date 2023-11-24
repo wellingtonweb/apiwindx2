@@ -144,13 +144,13 @@ class CieloClient
         return $response->object();
     }
 
-    public function getStatus($transaction)
+    public function getStatus()
     {
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
             "MerchantId" => $this->merchantId,
             "MerchantKey" => $this->merchantKey,
-        ])->get("{$this->apiQueryUrl}1/sales/{$transaction}");
+        ])->get("{$this->apiQueryUrl}1/sales/{$this->order->transaction}");
 
         $typePayment = $response->object()->Payment->Type;
 

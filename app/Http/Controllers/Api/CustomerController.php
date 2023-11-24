@@ -134,11 +134,13 @@ class CustomerController extends Controller
                 'customer_password' => $request->customer_password
             ]);
 
-        if(!empty($response)){
-            return response()->json($response);
-        }else{
-            return response()->json(false);
-        }
+        return $response;
+
+//        if(!empty($response)){
+//            return response()->json($response);
+//        }else{
+//            return response()->json(false);
+//        }
     }
 
 }

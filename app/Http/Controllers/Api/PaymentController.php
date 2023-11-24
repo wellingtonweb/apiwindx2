@@ -246,7 +246,7 @@ class PaymentController extends Controller
 
             if($payment->method === "ecommerce")
             {
-                $ecommercePayment = CieloClient::getStatus($payment->transaction);
+                $ecommercePayment = (new CieloClient($payment, $request->all()))->getStatus();
 
                 if($ecommercePayment != null){
                     $payment->status = $ecommercePayment['status'];

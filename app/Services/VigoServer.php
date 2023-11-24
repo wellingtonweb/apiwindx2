@@ -110,14 +110,14 @@ class VigoServer
             }
 
 //            return true;
-            return collect($search);
+            return response()->json($search);
 
 //            $action = "A senha do usuário foi alterada via Central do Assinante.";
 //            self::setAuditCustomer($customerId, $action);
 
 
         }
-        return null;
+        return response()->json(false);;
     }
 
     public function getPaymentsCieloOld()
