@@ -61,7 +61,7 @@ class PaymentController extends Controller
 
         $validated = $request->validated();
 
-        dd((new VigoClient())->release($request->customer));
+//        dd((new VigoClient())->release($request->customer));
 
 //        $customer_origin = null;
 //
@@ -84,10 +84,10 @@ class PaymentController extends Controller
 
             $validated['amount'] = $validated['amount'] + $billet->total;
             $validated['reference'] = (Str::uuid())->toString();
-            $billetIsPay = (new VigoClient())->billetIsPay($validated['customer'], $billet->billet_id);
+            $isPaidBillet = (new VigoClient())->isPaidBillet($validated['customer'], $billet->billet_id);
         }
 
-        if(count($billetIsPay['billets']) === 0){
+        if(count($isPaidBillet['billets']) === 0){
             $payment = (Payment::create($validated))->load('terminal');
 
             if ($payment) {

@@ -301,6 +301,20 @@ class Payments
         FindPaymentsPending::dispatch($payments);
     }
 
+    public function findPaidBillet($billet_id)
+    {
+        $isPaid = false;
+        $payment = Payment::where('id', $billet_id)
+//            ->where('status', 'approved')
+            ->first();
+
+//        if($payment->isNotEmpty()){
+//            $isPaid = true;
+//        }
+
+        return $payment;
+    }
+
 //    public function runnerJobPaymentsPending()
 //    {
 //        $payments = $this->findPending();

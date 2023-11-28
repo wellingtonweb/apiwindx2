@@ -128,7 +128,7 @@ class CieloClient
             "MerchantKey" => $this->merchantKey,
             'RequestId' => $this->paymentData->reference
 
-        ])->post($this->apiUrl, [
+        ])->post("{$this->apiUrl}1/sales/", [
             "MerchantOrderId" => $this->order->reference,
             "Customer" => [
                 "Name" => "{$this->paymentData->buyer['first_name']} {$this->paymentData->buyer['last_name']}",
@@ -141,6 +141,7 @@ class CieloClient
             ]
         ]);
 
+//        return $response;
         return $response->object();
     }
 

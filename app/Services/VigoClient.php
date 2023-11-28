@@ -242,8 +242,6 @@ class VigoClient
 
             ]);
 
-//        dd($response->object());
-
         if ($response->successful() && $response->object() != "ERRO") {
             $customers = $response->object();
 
@@ -272,13 +270,12 @@ class VigoClient
             $this->customer = $response->object();
         }
         return $this;
-//        return $response->object();
     }
 
     public function checkoutBillet($billet, $payment)
     {
         $billet = (object)$billet;
-        $payment = (object)$payment;
+//        $payment = (object)$payment;
         $caixa = 38;
 //        $caixa = self::getCaixa($billet->company_id, $payment->place);
 
@@ -288,8 +285,8 @@ class VigoClient
             'caixa' => $caixa,
         ];
 
-        //Testando validação do cartão de crédito
-        return 'OK - BOLETO LIQUIDADO COM SUCESSO';
+//        //Testando validação do cartão de crédito
+//        return 'OK - BOLETO LIQUIDADO COM SUCESSO';
 
         $response = Http::accept('application/json')
             ->withToken($this->token)
@@ -303,11 +300,16 @@ class VigoClient
 
         if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
         {
+
+            Http::accept('application/json')
+                ->get("http://127.0.0.1:8000/assinante/callback/{$payment['paymentId']}");
+
+
             Log::alert(json_encode($response->status() . ' - ('.$billet->billet_id.')' . $response->object()));
 
-            self::release($payment->customer);
+            self::release($payment['customerId']);
 
-            CouponMailPDF::dispatch($payment->paymentId);
+            CouponMailPDF::dispatch($payment['paymentId']);
 
             (new VigoServer())->setAuditPayment($auditInfo, 200);
 
@@ -549,7 +551,7 @@ class VigoClient
         return $caixa;
     }
 
-    public function billetIsPay($customerId, $billetIdCheck)
+    public function isPaidBillet($customerId, $billetIdCheck)
     {
         $resp = [
             'status' => false,
