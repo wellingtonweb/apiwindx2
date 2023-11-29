@@ -26,9 +26,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('queue:restart')->hourly();
-        $schedule->call(function () {
-            Payments::findPending();
-        })->everyMinute();
+//        $schedule->call(function () {
+//            Payments::findPending();
+//        })->everyMinute();
 //        })->everyFiveMinutes();
 //        })->everyMinute()->between('8:30', '19:00');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\PaymentApproved;
 use App\Models\Payment;
 use App\Services\CieloClient;
 use App\Services\PaygoClient;
@@ -160,12 +161,14 @@ class ProcessCallback implements ShouldQueue
             if (Str::contains($this->payment->status, ['approved'])) {
                 $action = ($this->payment->status === "approved") ? true : false;
 
+
+
                 $paymentDataSlim = [
                     'customerId' => $this->payment->customer,
                     'paymentId' => $this->payment->id,
                     'reference' => $this->payment->reference,
                     'method' => $this->payment->method,
-                    'payment_type' => $this->payment->payment_type,
+                    'paymentType' => $this->payment->payment_type,
                     'place' => (isset($this->payment->terminal)) ? "autoatendimento" : "central"
                 ];
 

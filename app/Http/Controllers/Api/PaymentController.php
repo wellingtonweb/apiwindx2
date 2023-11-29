@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Facades\Bus;
+use App\Events\PaymentApproved;
 
 class PaymentController extends Controller
 {
@@ -87,6 +88,10 @@ class PaymentController extends Controller
             $isPaidBillet = (new VigoClient())->isPaidBillet($validated['customer'], $billet->billet_id);
         }
 
+//        event(new PaymentApproved("Pagamento realizado com sucesso!"));
+//
+//        dd('Teste');
+
         if(count($isPaidBillet['billets']) === 0){
             $payment = (Payment::create($validated))->load('terminal');
 
@@ -121,6 +126,7 @@ class PaymentController extends Controller
 //                            dd($payment, $ecommercePayment);
 
                         if ($payment->save() && $payment->status == "approved"){
+//                            event(new PaymentApproved("Pagamento realizado com sucesso!"));
 //                            $payment->transaction = $ecommercePayment->object()->Payment->AuthorizationCode;
                             $payment->transaction = $ecommercePayment->object()->Payment->PaymentId;
                             $payment->installment = $ecommercePayment->object()->Payment->Installments;
@@ -128,7 +134,7 @@ class PaymentController extends Controller
                             $payment->receipt = CieloClient::receiptFormat($ecommercePayment->object());
                             $payment->save();
 
-                            ProcessCallback::dispatch($payment);
+//                            ProcessCallback::dispatch($payment);
                         }else{
                             $payment->installment = $ecommercePayment->Payment->Installments;
                             $payment->save();
@@ -220,6 +226,12 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
+        $data = ["id" => $payment->id,"status" => $payment->status];
+
+        //Teste de notificação do pusher
+//        event(new PaymentApproved($payment));
+//        dd('Teste',$data);
+
         if ($payment) {
             if($payment->method === "tef")
             {
@@ -263,6 +275,11 @@ class PaymentController extends Controller
                             }
                         }
 
+                        //Notificação do pusher
+//                        if($payment->status === 'approved'){
+//                            event(new PaymentApproved("Pagamento {$payment->id} aprovado com sucesso!"));
+//                        }
+
                         ProcessCallback::dispatch($payment);
                     }
 
@@ -276,6 +293,11 @@ class PaymentController extends Controller
 
                 if(Str::contains($payment->status, ['approved', 'canceled','chargeback']))
                 {
+                    //Notificação do pusher
+//                    if($payment->status === 'approved'){
+//                        event(new PaymentApproved($payment));
+//                    }
+
                     ProcessCallback::dispatch($payment);
                 }
 

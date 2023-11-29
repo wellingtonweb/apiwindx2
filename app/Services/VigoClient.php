@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
+
 class VigoClient
 {
 
@@ -186,47 +187,7 @@ class VigoClient
         return $billets;
     }
 
-    public function release(int $idCustomer)
-    {
-        $idCustomer = 38524;
-        $hasPending = false;
-        $documentCustomer = "";
-        $billets = [];
-        $response = json_decode(Http::accept('application/json')
-            ->withToken($this->token)
-            ->post("{$this->apiUrl}/api/app_getboletosid", ["id" => "{$idCustomer}"])->body());
 
-        $response = json_decode($response);
-
-        foreach ($response as $key => $billet) {
-            $pay = Carbon::parse($billet->Vencimento);
-            $today = Carbon::now()->startOfDay();
-            $documentCustomer = $billet->CpfCgc;
-
-            if ($billet->Pago == 0 && $pay <= $today) {
-                $hasPending = true;
-                array_push($billets, $billet);
-            }
-        }
-
-        if(!$hasPending)
-        {
-            $response = Http::accept('application/json')
-                ->withToken($this->token)
-                ->post($this->apiUrl . "/api/app_liberacomid", [
-                    "cpf_cnpj" => str_replace(['/', '-', '.'], '', $documentCustomer),
-                    "id" => "{$idCustomer}"
-                ]);
-
-            if ($response->successful() && $response->object() === "OK") {
-                return response()->json('unlocked');
-            } else {
-                return response()->json($response->object());
-            }
-        }
-
-        return response()->json('pending');
-    }
 
     public function central(string $login, string $password)
     {
@@ -288,38 +249,84 @@ class VigoClient
 //        //Testando validação do cartão de crédito
 //        return 'OK - BOLETO LIQUIDADO COM SUCESSO';
 
-        $response = Http::accept('application/json')
-            ->withToken($this->token)
-            ->post($this->apiUrl . "/api/app_liquidaboleto", [
-                "id_boleto" => "{$billet->billet_id}",
-//                "id_caixa" => "37",//oficial
-//                "id_caixa" => "39",//sandbox
-                "id_caixa" => "{$caixa}",
-                "valor_pago" => "{$billet->total}"
-            ]);
+//        $response = Http::accept('application/json')
+//            ->withToken($this->token)
+//            ->post($this->apiUrl . "/api/app_liquidaboleto", [
+//                "id_boleto" => "{$billet->billet_id}",
+////                "id_caixa" => "37",//oficial
+////                "id_caixa" => "39",//sandbox
+//                "id_caixa" => "{$caixa}",
+//                "valor_pago" => "{$billet->total}"
+//            ]);
 
-        if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
+        $teste = 'OK - BOLETO LIQUIDADO COM SUCESSO';
+
+        if ($teste === 'OK - BOLETO LIQUIDADO COM SUCESSO')
+//        if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
         {
 
-            Http::accept('application/json')
-                ->get("http://127.0.0.1:8000/assinante/callback/{$payment['paymentId']}");
+            Log::alert(json_encode('teste' . ' - ('.$billet->billet_id.') ' . 'object'));
+//            Log::alert(json_encode($response->status() . ' - ('.$billet->billet_id.') ' . $response->object()));
 
+            //Liberação do cliente
+//            self::release($payment['customerId']);
 
-            Log::alert(json_encode($response->status() . ' - ('.$billet->billet_id.')' . $response->object()));
-
-            self::release($payment['customerId']);
-
-            CouponMailPDF::dispatch($payment['paymentId']);
+            //Envio de comprovante por e-mail de cadastro
+//            CouponMailPDF::dispatch($payment['paymentId']);
 
             (new VigoServer())->setAuditPayment($auditInfo, 200);
 
-            return $response->object();
+            return null;
+//            return $response->object();
         } else {
             Log::alert('Erro: Boleto nº '. $billet->billet_id . ' já foi liquidado!');
             (new VigoServer())->setAuditPayment($auditInfo, 404);
 
-            return $response->throw();
+            return null;
+//            return $response->throw();
         }
+    }
+
+    public function release(int $idCustomer)
+    {
+//        $idCustomer = 38524;
+        $hasPending = false;
+        $documentCustomer = "";
+        $billets = [];
+        $response = json_decode(Http::accept('application/json')
+            ->withToken($this->token)
+            ->post("{$this->apiUrl}/api/app_getboletosid", ["id" => "{$idCustomer}"])->body());
+
+        $response = json_decode($response);
+
+        foreach ($response as $key => $billet) {
+            $pay = Carbon::parse($billet->Vencimento);
+            $today = Carbon::now()->startOfDay();
+            $documentCustomer = $billet->CpfCgc;
+
+            if ($billet->Pago == 0 && $pay <= $today) {
+                $hasPending = true;
+                array_push($billets, $billet);
+            }
+        }
+
+        if(!$hasPending)
+        {
+            $response = Http::accept('application/json')
+                ->withToken($this->token)
+                ->post($this->apiUrl . "/api/app_liberacomid", [
+                    "cpf_cnpj" => str_replace(['/', '-', '.'], '', $documentCustomer),
+                    "id" => "{$idCustomer}"
+                ]);
+
+            if ($response->successful() && $response->object() === "OK") {
+                return response()->json('unlocked');
+            } else {
+                return response()->json($response->object());
+            }
+        }
+
+        return response()->json('pending');
     }
 
 //    public function reverseBillet($billet, $payment_type)

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\PaymentApproved;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,6 +41,10 @@ class FindPaymentsPending implements ShouldQueue
         foreach ($this->payments as $payment) {
 //            dd($payment);
 //            Log::alert($payment['id']);
+            if($payment->status === 'approved'){
+                event(new PaymentApproved("Pagamento {$payment->id} aprovado com sucesso!"));
+            }
+
             ProcessCallback::dispatch($payment);
         }
     }

@@ -23,6 +23,9 @@ class EventServiceProvider extends ServiceProvider
         JobProcessed::class => [
             'App\Observers\JobProcessedObserver@jobProcessed',
         ],
+//        \App\Events\PaymentApproved::class => [
+//            \App\Listeners\SendPaymentApprovalNotification::class,
+//        ],
     ];
 
     /**

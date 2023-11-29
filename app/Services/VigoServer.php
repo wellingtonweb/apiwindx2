@@ -29,7 +29,9 @@ class VigoServer
         $payment_typeUpdated = "";
         $amount = str_replace('.',',', $auditInfo['billet']->total);
 
-        switch ($auditInfo['payment']->payment_type){
+        Log::info("Payment type: {$auditInfo['payment']['paymentType']}");
+
+        switch ($auditInfo['payment']['paymentType']){
             case 'credit': $payment_typeUpdated = "CRÉDITO"; break;
             case 'debit': $payment_typeUpdated = "DÉBITO"; break;
             case 'pix': $payment_typeUpdated = "PIX"; break;
@@ -46,8 +48,8 @@ class VigoServer
                     'hora'   =>   $this->today->format('H:i:s'),
                     'operador'   =>   'API',
                     'acao'   =>   "BOLETO LIQUIDADO: {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount} | CAIXA: {$auditInfo['caixa']}
-            | PAG. ID: {$auditInfo['payment']->paymentId} | REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
-                    'idcliente'   =>   $auditInfo['payment']->customerId,
+            | PAG. ID: {$auditInfo['payment']['paymentId']} | REF.: {$auditInfo['payment']['reference']} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']['place']).".",
+                    'idcliente'   =>   $auditInfo['payment']['customerId'],
             ]);
         }else{
             DB::connection('vigo')->table('sistema_auditoria_cliente')
@@ -56,8 +58,8 @@ class VigoServer
                     'hora'   =>   $this->today->format('H:i:s'),
                     'operador'   =>   'API',
                     'acao'   =>   "PAGAMENTO DUPLICADO DO BOLETO : {$auditInfo['billet']->billet_id}/{$auditInfo['billet']->reference} | VALOR: R$ {$amount}
-            | PAG. ID: {$auditInfo['payment']->paymentId} | REF.: {$auditInfo['payment']->reference} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']->place).".",
-                    'idcliente'   =>   $auditInfo['payment']->customerId,
+            | PAG. ID: {$auditInfo['payment']['paymentId']} | REF.: {$auditInfo['payment']['reference']} | MÉTODO: ".$payment_typeUpdated." | VIA: ".strtoupper($auditInfo['payment']['place']).".",
+                    'idcliente'   =>   $auditInfo['payment']['customerId'],
                 ]);
         }
 
