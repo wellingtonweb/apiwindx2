@@ -249,41 +249,41 @@ class VigoClient
 //        //Testando validação do cartão de crédito
 //        return 'OK - BOLETO LIQUIDADO COM SUCESSO';
 
-//        $response = Http::accept('application/json')
-//            ->withToken($this->token)
-//            ->post($this->apiUrl . "/api/app_liquidaboleto", [
-//                "id_boleto" => "{$billet->billet_id}",
-////                "id_caixa" => "37",//oficial
-////                "id_caixa" => "39",//sandbox
-//                "id_caixa" => "{$caixa}",
-//                "valor_pago" => "{$billet->total}"
-//            ]);
+        $response = Http::accept('application/json')
+            ->withToken($this->token)
+            ->post($this->apiUrl . "/api/app_liquidaboleto", [
+                "id_boleto" => "{$billet->billet_id}",
+//                "id_caixa" => "37",//oficial
+//                "id_caixa" => "39",//sandbox
+                "id_caixa" => "{$caixa}",
+                "valor_pago" => "{$billet->total}"
+            ]);
 
-        $teste = 'OK - BOLETO LIQUIDADO COM SUCESSO';
+//        $teste = 'OK - BOLETO LIQUIDADO COM SUCESSO';
 
-        if ($teste === 'OK - BOLETO LIQUIDADO COM SUCESSO')
-//        if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
+//        if ($teste === 'OK - BOLETO LIQUIDADO COM SUCESSO')
+        if ($response->object() === 'OK - BOLETO LIQUIDADO COM SUCESSO')
         {
 
-            Log::alert(json_encode('teste' . ' - ('.$billet->billet_id.') ' . 'object'));
-//            Log::alert(json_encode($response->status() . ' - ('.$billet->billet_id.') ' . $response->object()));
+//            Log::alert(json_encode('teste' . ' - ('.$billet->billet_id.') ' . 'object'));
+            Log::alert(json_encode($response->status() . ' - ('.$billet->billet_id.') ' . $response->object()));
 
             //Liberação do cliente
-//            self::release($payment['customerId']);
+            self::release($payment['customerId']);
 
             //Envio de comprovante por e-mail de cadastro
-//            CouponMailPDF::dispatch($payment['paymentId']);
+            CouponMailPDF::dispatch($payment['paymentId']);
 
             (new VigoServer())->setAuditPayment($auditInfo, 200);
 
-            return null;
-//            return $response->object();
+//            return null;
+            return $response->object();
         } else {
             Log::alert('Erro: Boleto nº '. $billet->billet_id . ' já foi liquidado!');
             (new VigoServer())->setAuditPayment($auditInfo, 404);
 
-            return null;
-//            return $response->throw();
+//            return null;
+            return $response->throw();
         }
     }
 
