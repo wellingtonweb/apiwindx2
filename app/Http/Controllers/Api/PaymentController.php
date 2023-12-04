@@ -70,18 +70,20 @@ class PaymentController extends Controller
 //            $customer_origin = json_decode($request->customer_origin)[0]->origin;
 //        }
 
-        $billetIsPay = [];
+        $isPaidBillet = [];
 
         $validated['amount'] = 0;
         $validated['fees'] = false;
 
         foreach ($validated['billets'] as $billet) {
-            $validated['fees'] = WorkingDays::hasFees($billet->duedate);
-            if($validated['fees']){
+//            if($customer_origin === 'bot'){
+//                $validated['fees'] = WorkingDays::hasFees($billet->duedate);
+//                if($validated['fees']){
+//                    $billet->total = (($billet->value + $billet->addition) - $billet->discount);
+//                }
+//            }else{
                 $billet->total = (($billet->value + $billet->addition) - $billet->discount);
-            }else{
-                $billet->total = $billet->value;
-            }
+//            }
 
             $validated['amount'] = $validated['amount'] + $billet->total;
             $validated['reference'] = (Str::uuid())->toString();
@@ -180,7 +182,8 @@ class PaymentController extends Controller
                             $payment->customer_origin = !empty($request->customer_origin) ? $request->customer_origin : null;
                             $payment->save();
 
-                            $payment->qrCode = "data:image\/png;base64,{$ecommercePayment->Payment->QrCodeBase64Image}";
+                            $payment->qrCode = "data:image/png;base64,".$ecommercePayment->Payment->QrCodeBase64Image;
+//                            $payment->qrCode = "data:image\/png;base64,{$ecommercePayment->Payment->QrCodeBase64Image}";
                             $payment->copyPaste = $ecommercePayment->Payment->QrCodeString;
                             $payment->PaymentId = $ecommercePayment->Payment->PaymentId;
 
@@ -200,13 +203,16 @@ class PaymentController extends Controller
                     $payment->qrCode = $response->qrcode->base64;
                 }
 
-                return new PaymentResource($payment);
+//                dd($payment);
+
+//                return new PaymentResource($payment);
             }
         }else{
-            if(count($billetIsPay['billets']) > 1){
-                $message = "As faturas IDs ".implode(', ', $billetIsPay['billets']).", já foram pagas!";
+
+            if(count($isPaidBillet['billets']) > 1){
+                $message = "As faturas IDs ".implode(', ', $isPaidBillet['billets']).", já foram pagas!";
             }else{
-                $message = "A fatura ID ".implode(', ', $billetIsPay['billets']).", já foi paga!";
+                $message = "A fatura ID ".implode(', ', $isPaidBillet['billets']).", já foi paga!";
             }
 
             return response()->json([
@@ -214,7 +220,9 @@ class PaymentController extends Controller
             ], 404);
         }
 
-//        return new PaymentResource($payment);
+//        dd($payment);
+
+        return new PaymentResource($payment);
     }
 
     /**
@@ -226,7 +234,7 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-        $data = ["id" => $payment->id,"status" => $payment->status];
+//        $data = ["id" => $payment->id,"status" => $payment->status];
 
         //Teste de notificação do pusher
 //        event(new PaymentApproved($payment));

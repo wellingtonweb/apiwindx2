@@ -84,8 +84,8 @@ class VigoServer
         if($customer){
 
             $affected = $this->vigoDB->table('cadastro_clientes')
-//                ->where('id', $customer['customer_id'])
-                ->where('id', '=',34258)
+                ->where('id', $customer['customer_id'])
+//                ->where('id', '=',34258)
                 ->update(['senha' => $customer['customer_password']]);
 
             if(!empty($affected)){
@@ -108,7 +108,7 @@ class VigoServer
         if($login){
             $search = $this->vigoDB->select("select * from cadastro_clientes where login = ?",[$login]);
             if(empty($search)){
-                return null;
+                return [];
             }
 
 //            return true;
