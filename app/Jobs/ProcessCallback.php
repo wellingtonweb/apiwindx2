@@ -161,8 +161,6 @@ class ProcessCallback implements ShouldQueue
             if (Str::contains($this->payment->status, ['approved'])) {
                 $action = ($this->payment->status === "approved") ? true : false;
 
-
-
                 $paymentDataSlim = [
                     'customerId' => $this->payment->customer,
                     'paymentId' => $this->payment->id,
