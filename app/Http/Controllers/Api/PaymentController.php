@@ -152,8 +152,17 @@ class PaymentController extends Controller
 
                 if($payment->payment_type === 'debit')
                 {
-                    dd('Função Débito desabilitada temporariamente!');
+//                    dd('Função Débito desabilitada temporariamente!');
                     $ecommercePayment = $cieloPayment->debit();
+
+//                    if($ecommercePayment->failed()){
+//                        return response()->json([
+//                            'message' => 'Servidor indisponível!'
+//                        ], $ecommercePayment->status());
+//                    }
+
+                    dd($ecommercePayment->object(), $ecommercePayment->status());
+
                     $payment->status = $cieloPayment->rewriteStatus($ecommercePayment->Payment->Status);
 
                     if ($payment->save() && $payment->status == "approved"){
