@@ -65,35 +65,59 @@ class PaymentController extends Controller
 
 //        dd((new VigoClient())->release($request->customer));
 
-//        $customer_origin = null;
-//
-//        if(json_decode($request->customer_origin)[0]->origin != null){
-//            $customer_origin = json_decode($request->customer_origin)[0]->origin;
-//        }
+        $customer_origin = null;
+
+        if(isset($request->customer_origin) && json_decode($request->customer_origin)[0]->origin != null){
+            $customer_origin = json_decode($request->customer_origin)[0]->origin;
+        }
 
         $isPaidBillet = [];
 
         $validated['amount'] = 0;
         $validated['fees'] = false;
+        $calcFees = [];
 
-        foreach ($validated['billets'] as $billet) {
-//            if($customer_origin === 'bot'){
+        if(isset($customer_origin) && $customer_origin === 'bot'){
+            $calcFees['status'] = 'tem juros';
+
+            foreach ($validated['billets'] as $billet)
+            {
 //                $validated['fees'] = WorkingDays::hasFees($billet->duedate);
-//                if($validated['fees']){
-//                    $billet->total = (($billet->value + $billet->addition) - $billet->discount);
-//                }
-//            }else{
-            $billet->total = (($billet->value + $billet->addition) - $billet->discount);
-//            }
+                $billet->addition = 0;
+                $billet->discount = 0;
 
-            $validated['amount'] = $validated['amount'] + $billet->total;
-            $validated['reference'] = (Str::uuid())->toString();
-            $isPaidBillet = (new VigoClient())->isPaidBillet($validated['customer'], $billet->billet_id);
+//                $calcFees['fees'] = $validated['fees'];
+
+//                if($validated['fees'])
+//                {
+                    $billet->addition = WorkingDays::calcFees($billet->duedate, $billet->value);
+                    $billet->total = (($billet->value + $billet->addition) - $billet->discount);
+//                }else{
+//                    $billet->total = $billet->value - $billet->discount;
+//
+//                    $calcFees['total'] = $billet->total;
+//                    $calcFees['addition'] = WorkingDays::calcFees($billet->duedate, $billet->value);
+//                    $calcFees['level'] = 2;
+//                }
+
+                $validated['amount'] = $validated['amount'] + $billet->total;
+                $validated['reference'] = (Str::uuid())->toString();
+                $isPaidBillet = (new VigoClient())->isPaidBillet($validated['customer'], $billet->billet_id);
+            }
+        }else{
+            foreach ($validated['billets'] as $billet)
+            {
+                $billet->total = (($billet->value + $billet->addition) - $billet->discount);
+
+                $validated['amount'] = $validated['amount'] + $billet->total;
+                $validated['reference'] = (Str::uuid())->toString();
+                $isPaidBillet = (new VigoClient())->isPaidBillet($validated['customer'], $billet->billet_id);
+            }
         }
 
 //        event(new PaymentApproved("Pagamento realizado com sucesso!"));
 //
-//        dd('Teste');
+//        dd($calcFees);
 
         if(count($isPaidBillet['billets']) > 0){
 
@@ -216,6 +240,7 @@ class PaymentController extends Controller
                 $payment->save();
 
                 $payment->qrCode = $response->qrcode->base64;
+                $payment->paymentUrl = $response->paymentUrl;
             }
         }
 

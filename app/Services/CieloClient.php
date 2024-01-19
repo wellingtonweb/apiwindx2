@@ -119,7 +119,7 @@ class CieloClient
                 "Currency" => "BRL",
                 "Country" => "BRA",
                 "Type" => "DebitCard",
-                "Authenticate" => true,
+                "Authenticate" => false,
                 "ReturnUrl" => "https://ambientedetestes.windx.com.br/cartao/debito/obrigado.php", //REDIRECIONA PARA A P�GINA DE OBRIGADO. FICA SEU CRITERIO. VOC� DIRECIONAR PARA ONDE DESEJAR.
                 "Amount" => $this->order->amount * 100,
                 "DebitCard" => [
@@ -130,18 +130,20 @@ class CieloClient
                     "Brand" => $this->paymentData->card['bandeira']
                 ],
                 "ExternalAuthentication" => [
-                    "Cavv" => "AAABB2gHA1B5EFNjWQcDAAAAAAB=",
-                    "Xid" => "Uk5ZanBHcWw2RjRCbEN5dGtiMTB=",
-                    "Eci" => "5",
-                    "Version" => "2",
+//                    "Cavv" => "AAABB2gHA1B5EFNjWQcDAAAAAAB=",
+//                    "Xid" => "Uk5ZanBHcWw2RjRCbEN5dGtiMTB=",
+//                    "Eci" => "5",
+//                    "Version" => "2",
+//                    "ReferenceID" => "a24a5d87-b1a1-4aef-a37b-2f30b91274a3",
+                    "Eci" => "4",
                     "ReferenceID" => "a24a5d87-b1a1-4aef-a37b-2f30b91274a3",
-//                    "dataonly" => true
+                    "dataonly" => true
                 ],
 //                "Installments" => "{$this->paymentData->installment}",//se for recorrencia = 1
                 "Capture" => true,
                 "InitiatedTransactionIndicator" => [
                     'Category' => "C1",
-                    'Subcategory' => "StandingOrder",
+                    'Subcategory' => "CredentialsOnFile",
                 ]
             ]
         ]);
