@@ -63,8 +63,6 @@ class PaymentController extends Controller
 
         $validated = $request->validated();
 
-//        dd((new VigoClient())->release($request->customer));
-
         $customer_origin = null;
 
         if(isset($request->customer_origin) && json_decode($request->customer_origin)[0]->origin != null){
@@ -72,34 +70,16 @@ class PaymentController extends Controller
         }
 
         $isPaidBillet = [];
-
         $validated['amount'] = 0;
         $validated['fees'] = false;
-        $calcFees = [];
 
         if(isset($customer_origin) && $customer_origin === 'bot'){
-            $calcFees['status'] = 'tem juros';
-
             foreach ($validated['billets'] as $billet)
             {
-//                $validated['fees'] = WorkingDays::hasFees($billet->duedate);
                 $billet->addition = 0;
                 $billet->discount = 0;
-
-//                $calcFees['fees'] = $validated['fees'];
-
-//                if($validated['fees'])
-//                {
-                    $billet->addition = WorkingDays::calcFees($billet->duedate, $billet->value);
-                    $billet->total = (($billet->value + $billet->addition) - $billet->discount);
-//                }else{
-//                    $billet->total = $billet->value - $billet->discount;
-//
-//                    $calcFees['total'] = $billet->total;
-//                    $calcFees['addition'] = WorkingDays::calcFees($billet->duedate, $billet->value);
-//                    $calcFees['level'] = 2;
-//                }
-
+                $billet->addition = WorkingDays::calcFees($billet->duedate, $billet->value);
+                $billet->total = (($billet->value + $billet->addition) - $billet->discount);
                 $validated['amount'] = $validated['amount'] + $billet->total;
                 $validated['reference'] = (Str::uuid())->toString();
                 $isPaidBillet = (new VigoClient())->isPaidBillet($validated['customer'], $billet->billet_id);
@@ -114,10 +94,6 @@ class PaymentController extends Controller
                 $isPaidBillet = (new VigoClient())->isPaidBillet($validated['customer'], $billet->billet_id);
             }
         }
-
-//        event(new PaymentApproved("Pagamento realizado com sucesso!"));
-//
-//        dd($calcFees);
 
         if(count($isPaidBillet['billets']) > 0){
 
