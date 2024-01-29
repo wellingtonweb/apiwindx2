@@ -13,6 +13,7 @@
         "geekcom/validator-docs": "^3.5",
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.54",
+        "laravel/horizon": "^5.22",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
         "pusher/pusher-php-server": "^7.2"
@@ -61,7 +62,11 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "ext-pcntl": "8.0",
+            "ext-posix": "8.0"
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true
