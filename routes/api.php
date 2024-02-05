@@ -40,6 +40,7 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::get('payments/cancel/{payment}', [PaymentController::class, "cancelPayment"]);
     Route::get('/payments-pending', [PaymentController::class, "paymentsPending"]);
     Route::get('/send-mail-coupon-pdf/{payment}', [PaymentController::class, "sendMailCouponPDF"]);
+    Route::get('/authgetnet', [PaymentController::class, "authgetnet"]);
 
     // Customer Payments
     Route::get('/customer/{customer}/payments', [CustomerController::class, "payments"]);
