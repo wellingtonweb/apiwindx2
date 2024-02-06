@@ -104,7 +104,7 @@ class CieloClient
 
     public function debit()
     {
-//        dd($this);
+        dd($this->get_auth_token());
         $response = Http::withHeaders([
             "Content-Type" => "application/json",
             "MerchantId" => $this->merchantId,
@@ -119,7 +119,7 @@ class CieloClient
                 "Currency" => "BRL",
                 "Country" => "BRA",
                 "Type" => "DebitCard",
-                "Authenticate" => false,
+                "Authenticate" => true,
                 "ReturnUrl" => "https://ambientedetestes.windx.com.br/cartao/debito/obrigado.php", //REDIRECIONA PARA A P�GINA DE OBRIGADO. FICA SEU CRITERIO. VOC� DIRECIONAR PARA ONDE DESEJAR.
                 "Amount" => $this->order->amount * 100,
                 "DebitCard" => [
@@ -149,6 +149,25 @@ class CieloClient
         ]);
 
         return $response;
+    }
+
+    public function get_auth_token()
+    {
+        $id = config('services.cielo.production.api_merchant_id');
+        $key = config('services.cielo.production.api_merchant_key');
+
+        $response = Http::asForm()->withHeaders([
+//            "Accept" => "application/json, text/plain, */*",
+            "Authorization" => "Basic ".base64_encode("$id:$key"),
+            "Content-Type" => "application/json"
+        ])->post("{$this->apiUrl}v2/auth/token", [
+            "EstablishmentCode" => "1106093345",
+            "MerchantName" => "PENHA DE SOUZA JAMARI",
+            "MCC" => "4816"
+        ]);
+
+        return $response->object();
+//        return $response->object()->access_token;
     }
 
 //    public function debit()

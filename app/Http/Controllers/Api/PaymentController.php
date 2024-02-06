@@ -503,11 +503,37 @@ class PaymentController extends Controller
 
     public function authgetnet()
     {
-//        $response = GetnetClient::get_token();
-        $response = (new GetnetClient())->card_tokenization();
+//        $response = (new GetnetClient())->debit();
 
-        dd($response);
-//        return GetnetClient::token();
+//        $response = (new CieloClient())->debit();
+
+
+        $id = "3d60f342-9728-47bd-9295-556a7e16e67f";
+        $key = "CnsSGyo9IKUWiUw+v4Q1WcHwYdH2VGiyQYV2Jz0gs14=";
+        $url = "https://mpi.braspag.com.br/";
+
+//        $id = config('services.cielo.sandbox.api_merchant_id');
+//        $key = config('services.cielo.sandbox.api_merchant_key');
+//        $url = config('services.cielo.sandbox.api_url');
+        $token = base64_encode($id.":".$key);
+
+        $response = Http::withHeaders([
+//            "Accept" => "application/json, text/plain, */*",
+            "Authorization" => "Basic ".$token,
+            "Content-Type" => "application/json"
+        ])->post($url."v2/auth/token", [
+            "EstablishmentCode" => "1106093345",
+            "MerchantName" => "Penha De Souza Jamari",
+            "MCC" => "4816"
+        ]);
+
+        dd($response->object()->access_token);
+
+        return $response;
+//        return $response->object()->access_token;
+
+
+//        return $response;
     }
 
 }
